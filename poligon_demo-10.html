@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>POLİGON</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{width:100%;height:100%;overflow:hidden;background:#fff;}
+
+/* FULL SCREEN */
+#po-wrap{display:flex;flex-direction:column;width:100%;height:100%;background:#fff;}
+
+/* HEADER */
+#po-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:8px 16px;background:#fff;
+  border-bottom:1px solid #eee;flex-shrink:0;height:52px;
+}
+.po-lbl{font-family:'Oswald',sans-serif;font-size:9px;font-weight:700;color:#aaa;letter-spacing:1.5px;display:block;}
+.po-val{font-family:'Bebas Neue',sans-serif;font-size:20px;color:#111;letter-spacing:1px;line-height:1.1;}
+.po-val.gold{color:#C9A84C;}
+.po-b{width:8px;height:20px;border-radius:2px 2px 1px 1px;}
+.po-b.on{background:#C9A84C;box-shadow:0 0 4px rgba(201,168,76,0.6);}
+.po-b.off{background:#ddd;}
+
+/* GAME AREA */
+#po-area{
+  flex:1;position:relative;overflow:hidden;background:#fff;
+}
+
+/* layers */
+#po-tgts,#po-fx{position:absolute;inset:0;pointer-events:none;}
+#po-aim{position:absolute;pointer-events:none;z-index:20;will-change:transform;}
+
+/* overlay screen */
+#po-screen{
+  position:absolute;inset:0;z-index:30;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:rgba(255,255,255,0.93);gap:12px;
+}
+#po-screen.off{display:none;}
+
+/* CONTROLS */
+#po-controls{
+  flex-shrink:0;height:110px;
+  background:#0a0a14;
+  border-top:1px solid rgba(201,168,76,0.2);
+  display:flex;align-items:center;justify-content:space-around;
+  padding:0 24px;
+}
+
+/* JOYSTICK */
+#po-stick-wrap{position:relative;width:88px;height:88px;display:flex;align-items:center;justify-content:center;}
+#po-stick-cross{position:absolute;pointer-events:none;}
+#po-stick-knob{
+  width:34px;height:34px;border-radius:50%;
+  background:radial-gradient(circle at 40% 35%,#555,#222);
+  border:2px solid #444;
+  position:absolute;left:50%;top:50%;
+  transform:translate(-50%,-50%);
+  box-shadow:0 2px 6px rgba(0,0,0,0.6);
+  pointer-events:none;
+}
+#po-stick-touch{
+  position:absolute;inset:0;
+  background:rgba(201,168,76,0.05);
+  border:1px solid rgba(201,168,76,0.2);
+  border-radius:10px;
+  cursor:pointer;touch-action:none;
+}
+
+/* KS BAR */
+#po-ks-bar{display:flex;flex-direction:column;align-items:center;gap:4px;}
+#po-ks-track{width:6px;height:68px;background:#1a1a2e;border-radius:3px;border:1px solid #333;position:relative;}
+#po-ks-fill{position:absolute;bottom:0;left:0;right:0;border-radius:3px;background:linear-gradient(180deg,#C9A84C,#8B6914);transition:height .3s;}
+
+/* FIRE BUTTON */
+#po-fire-btn{
+  width:78px;height:78px;border-radius:50%;
+  background:radial-gradient(circle at 40% 35%,#ef5555,#c62828);
+  border:3px solid #ff6666;
+  box-shadow:0 0 16px rgba(220,50,50,0.5),0 4px 0 #7a0000;
+  cursor:pointer;touch-action:none;
+  display:flex;align-items:center;justify-content:center;
+  transition:transform .08s,box-shadow .08s;
+}
+#po-fire-btn.pressed{transform:scale(0.91) translateY(2px);box-shadow:0 0 6px rgba(220,50,50,0.3),0 1px 0 #7a0000;}
+#po-fire-btn span{font-family:'Bebas Neue',sans-serif;font-size:15px;color:#fff;letter-spacing:2px;}
+
+/* FLOATS */
+.pg-float{position:absolute;font-family:'Bebas Neue',sans-serif;font-size:26px;pointer-events:none;text-shadow:0 2px 8px rgba(0,0,0,0.5);animation:pgF .8s ease-out forwards;z-index:40;}
+@keyframes pgF{0%{opacity:1;transform:translateY(0) scale(1);}100%{opacity:0;transform:translateY(-50px) scale(0.8);}}
+.pg-miss{position:absolute;font-family:'Bebas Neue',sans-serif;font-size:13px;color:#ef4444;pointer-events:none;animation:pgF .6s ease-out forwards;letter-spacing:1px;z-index:40;}
+
+/* RESULT */
+.po-badge{font-family:'Oswald',sans-serif;font-size:13px;font-weight:700;letter-spacing:2px;padding:5px 20px;border-radius:20px;}
+.po-badge.win{background:rgba(201,168,76,0.15);color:#C9A84C;}
+.po-badge.lose{background:rgba(80,80,80,0.15);color:#888;}
+
+/* DEMO SLIDER */
+#demo-row{position:absolute;top:6px;right:6px;z-index:50;display:flex;align-items:center;gap:6px;}
+#demo-row label{font-family:'Oswald',sans-serif;font-size:9px;color:#888;letter-spacing:1px;}
+#demo-row input{width:60px;accent-color:#C9A84C;}
+</style>
+</head>
+<body>
+<div id="po-wrap">
+
+  <!-- HEADER -->
+  <div id="po-header">
+    <!-- DEMO KS -->
+    <div id="demo-row">
+      <label>KS:<span id="ks-lbl">42</span></label>
+      <input type="range" min="0" max="100" value="42" oninput="setDemoKs(+this.value)">
+    </div>
+
+    <div><span class="po-lbl">KS</span><span class="po-val gold" id="po-ks-val">42.00</span></div>
+    <div style="text-align:center;"><span class="po-lbl">PUAN</span><span class="po-val" id="po-score-val">0</span></div>
+    <div style="text-align:right;"><span class="po-lbl">MERMİ</span>
+      <div id="po-ammo" style="display:flex;gap:3px;justify-content:flex-end;margin-top:2px;"></div>
+    </div>
+  </div>
+
+  <!-- GAME AREA -->
+  <div id="po-area">
+    <div id="po-tgts"></div>
+    <div id="po-fx"></div>
+    <div id="po-aim">
+      <svg width="48" height="48" viewBox="0 0 48 48">
+        <circle cx="24" cy="24" r="20" fill="none" stroke="rgba(239,68,68,0.35)" stroke-width="1.5"/>
+        <circle cx="24" cy="24" r="5"  fill="none" stroke="#ef4444" stroke-width="2"/>
+        <circle cx="24" cy="24" r="1.8" fill="#ef4444"/>
+        <line x1="24" y1="2"  x2="24" y2="15" stroke="#ef4444" stroke-width="2"/>
+        <line x1="24" y1="33" x2="24" y2="46" stroke="#ef4444" stroke-width="2"/>
+        <line x1="2"  y1="24" x2="15" y2="24" stroke="#ef4444" stroke-width="2"/>
+        <line x1="33" y1="24" x2="46" y2="24" stroke="#ef4444" stroke-width="2"/>
+      </svg>
+    </div>
+    <!-- SCREEN -->
+    <div id="po-screen">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:32px;color:#111;letter-spacing:4px;">SHOOTING RANGE</div>
+      <div style="font-family:'Oswald',sans-serif;font-size:11px;color:#aaa;letter-spacing:1px;margin:2px 0 16px;">+ İLE NİŞAN AL · KIRMIZI BUTONA ATEŞ ET</div>
+      <button onclick="po_start()" style="background:#C9A84C;border:none;color:#111;font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:3px;padding:13px 44px;cursor:pointer;border-radius:2px;box-shadow:0 4px 0 #8B6914;">HAZIR</button>
+    </div>
+  </div>
+
+  <!-- CONTROLS -->
+  <div id="po-controls">
+    <!-- KS BAR -->
+    <div id="po-ks-bar">
+      <div id="po-ks-track"><div id="po-ks-fill" style="height:42%;"></div></div>
+      <span style="font-family:'Oswald',sans-serif;font-size:8px;color:#555;letter-spacing:1px;margin-top:2px;">KS</span>
+    </div>
+
+    <!-- JOYSTICK -->
+    <div id="po-stick-wrap">
+      <svg id="po-stick-cross" width="88" height="88" viewBox="0 0 88 88">
+        <rect x="4"  y="32" width="80" height="24" rx="5" fill="#1a1a2e" stroke="#2a2a4e" stroke-width="1"/>
+        <rect x="32" y="4"  width="24" height="80" rx="5" fill="#1a1a2e" stroke="#2a2a4e" stroke-width="1"/>
+        <rect x="26" y="26" width="36" height="36" rx="5" fill="#222244" stroke="#3a3a5e" stroke-width="1"/>
+        <polygon points="44,9 38,19 50,19"  fill="rgba(201,168,76,0.6)"/>
+        <polygon points="44,79 38,69 50,69" fill="rgba(201,168,76,0.6)"/>
+        <polygon points="9,44 19,38 19,50"  fill="rgba(201,168,76,0.6)"/>
+        <polygon points="79,44 69,38 69,50" fill="rgba(201,168,76,0.6)"/>
+      </svg>
+      <div id="po-stick-knob"></div>
+      <div id="po-stick-touch"></div>
+    </div>
+
+    <!-- FIRE -->
+    <div id="po-fire-btn" ontouchstart="po_fire(event)" onmousedown="po_fire(event)">
+      <span>ATEŞ</span>
+    </div>
+  </div>
+
+</div><!-- /po-wrap -->
+
+<script>
+var PG_KS_GAIN = 0.005;
+var PG_CD  = 1000;
+var PG_KEY = 'pg_cd_end';
+var DEMO_KS = 42;
+localStorage.removeItem(PG_KEY);
+
+function setDemoKs(v) {
+  DEMO_KS = v;
+  document.getElementById('ks-lbl').textContent = v;
+  document.getElementById('po-ks-val').textContent = (+v).toFixed(2);
+  document.getElementById('po-ks-fill').style.height = v + '%';
+}
+
+// ── STATE ──
+var _aim = {x:0, y:0};
+var _areaW = 0, _areaH = 0;
+var _score = 0, _ammo = 6, _active = false;
+var _targets = [];
+var _raf = null, _cdInt = null;
+var _wobbleX = 0, _wobbleY = 0;
+
+// ── JOYSTICK ──
+var _stick = {active:false, ox:0, oy:0, dx:0, dy:0};
+var MAX_STICK = 30;
+
+var _stEl = document.getElementById('po-stick-touch');
+var _knEl = document.getElementById('po-stick-knob');
+
+_stEl.addEventListener('touchstart', function(e){
+  e.preventDefault();
+  _stick.active=true; _stick.ox=e.touches[0].clientX; _stick.oy=e.touches[0].clientY;
+  _stick.dx=0; _stick.dy=0;
+},{passive:false});
+_stEl.addEventListener('touchmove', function(e){
+  e.preventDefault();
+  if(!_stick.active) return;
+  _stick.dx=Math.max(-MAX_STICK,Math.min(MAX_STICK,e.touches[0].clientX-_stick.ox));
+  _stick.dy=Math.max(-MAX_STICK,Math.min(MAX_STICK,e.touches[0].clientY-_stick.oy));
+  _knEl.style.transform='translate(calc(-50% + '+_stick.dx+'px),calc(-50% + '+_stick.dy+'px))';
+},{passive:false});
+_stEl.addEventListener('touchend', function(e){
+  e.preventDefault();
+  _stick.active=false; _stick.dx=0; _stick.dy=0;
+  _knEl.style.transform='translate(-50%,-50%)';
+},{passive:false});
+_stEl.addEventListener('mousedown',function(e){_stick.active=true;_stick.ox=e.clientX;_stick.oy=e.clientY;});
+document.addEventListener('mousemove',function(e){
+  if(!_stick.active) return;
+  _stick.dx=Math.max(-MAX_STICK,Math.min(MAX_STICK,e.clientX-_stick.ox));
+  _stick.dy=Math.max(-MAX_STICK,Math.min(MAX_STICK,e.clientY-_stick.oy));
+  _knEl.style.transform='translate(calc(-50% + '+_stick.dx+'px),calc(-50% + '+_stick.dy+'px))';
+});
+document.addEventListener('mouseup',function(){
+  if(!_stick.active) return;
+  _stick.active=false;_stick.dx=0;_stick.dy=0;
+  _knEl.style.transform='translate(-50%,-50%)';
+});
+
+// ── LOOP ──
+function po_loop() {
+  if(!_active) return;
+  var spd = 3.8;
+  var nx = _aim.x + _stick.dx/MAX_STICK * spd;
+  var ny = _aim.y + _stick.dy/MAX_STICK * spd;
+  // KS titreme
+  var w = (100-DEMO_KS)/100 * 2.2;
+  _wobbleX = _wobbleX*0.75 + (Math.random()-0.5)*w*2;
+  _wobbleY = _wobbleY*0.75 + (Math.random()-0.5)*w*2;
+  nx += _wobbleX; ny += _wobbleY;
+  _aim.x = Math.max(4,Math.min(_areaW-4,nx));
+  _aim.y = Math.max(4,Math.min(_areaH-4,ny));
+  var a = document.getElementById('po-aim');
+  if(a){a.style.left=(_aim.x-24)+'px';a.style.top=(_aim.y-24)+'px';}
+  _raf = requestAnimationFrame(po_loop);
+}
+
+// ── TARGETS ──
+function po_spawnTargets() {
+  // Hedefler alt yarida, joystike yakin
+  var mx = _areaW, my = _areaH;
+  _targets = [
+    {id:0, x:mx*0.18, y:my*0.38, r:30, pts:4},
+    {id:1, x:mx*0.50, y:my*0.28, r:24, pts:5},
+    {id:2, x:mx*0.82, y:my*0.38, r:30, pts:4},
+    {id:3, x:mx*0.30, y:my*0.72, r:38, pts:3},
+    {id:4, x:mx*0.70, y:my*0.72, r:38, pts:3},
+  ];
+  po_renderTargets();
+}
+
+function po_renderTargets() {
+  var el = document.getElementById('po-tgts'); if(!el) return;
+  var h = '';
+  _targets.forEach(function(t) {
+    var r = t.r;
+    var paperW = Math.round(r*2.1);
+    var paperH = Math.round(r*2.6);
+    var px = Math.round(t.x - paperW/2);
+    var paperTop = Math.round(t.y - paperH*0.52);
+    var wireH = Math.max(0, paperTop);
+    var halfCy = Math.round(t.y - paperTop);
+
+    // Tel
+    h += '<div style="position:absolute;left:'+(t.x-1)+'px;top:0;width:2px;height:'+wireH+'px;background:#bbb;pointer-events:none;"></div>';
+    // Klips
+    h += '<div style="position:absolute;left:'+(t.x-5)+'px;top:'+(wireH-4)+'px;width:10px;height:7px;background:#666;border-radius:2px;pointer-events:none;"></div>';
+    // Gölge
+    h += '<div style="position:absolute;left:'+(px+3)+'px;top:'+(paperTop+3)+'px;width:'+paperW+'px;height:'+paperH+'px;background:rgba(0,0,0,0.08);border-radius:2px;pointer-events:none;"></div>';
+    // SVG kağıt + halkalar
+    h += '<svg style="position:absolute;left:'+px+'px;top:'+paperTop+'px;display:block;pointer-events:none;" width="'+paperW+'" height="'+paperH+'">';
+    h += '<rect width="'+paperW+'" height="'+paperH+'" rx="2" fill="#faf6ee" stroke="#ddd" stroke-width="0.5"/>';
+    h += '<rect width="'+paperW+'" height="5" fill="rgba(0,0,0,0.04)"/>';
+    // 3 halka: kirmizi → mavi → kirmizi
+    var rc=['#c62828','#1a3a8a','#c62828'];
+    var rr=[0.88, 0.58, 0.28];
+    for(var i=0;i<3;i++){
+      h += '<circle cx="'+(paperW/2)+'" cy="'+halfCy+'" r="'+(r*rr[i]).toFixed(1)+'" fill="'+rc[i]+'" stroke="#fff" stroke-width="1.2"/>';
+    }
+    // Merkez nokta
+    h += '<circle cx="'+(paperW/2)+'" cy="'+halfCy+'" r="'+(r*0.08).toFixed(1)+'" fill="#fff"/>';
+    // Puan etiketi
+    h += '<text x="'+(paperW/2)+'" y="'+(halfCy+r*1.18)+'" font-size="'+(r*0.36)+'" fill="#555" font-family="Oswald,sans-serif" font-weight="700" text-anchor="middle">'+t.pts+'PT</text>';
+    h += '</svg>';
+  });
+  el.innerHTML = h;
+}
+
+// ── FIRE ──
+function po_fire(e) {
+  if(e) e.preventDefault();
+  if(!_active || _ammo<=0) return;
+  var btn=document.getElementById('po-fire-btn');
+  btn.classList.add('pressed');
+  setTimeout(function(){btn.classList.remove('pressed');},120);
+  po_muzzle();
+  _ammo--; po_updAmmo(_ammo);
+  var hit=false;
+  for(var i=0;i<_targets.length;i++){
+    var t=_targets[i];
+    var dx=_aim.x-t.x, dy=_aim.y-t.y;
+    if(Math.sqrt(dx*dx+dy*dy)<=t.r){
+      hit=true;
+      _score+=t.pts;
+      document.getElementById('po-score-val').textContent=_score;
+      po_spawnFloat('+'+t.pts, _aim.x, _aim.y, t.pts===5?'#FFD700':'#fff');
+      _targets.splice(i,1);
+      po_renderTargets();
+      if(_targets.length===0) setTimeout(po_spawnTargets,500);
+      break;
+    }
+  }
+  if(!hit) po_spawnMiss(_aim.x,_aim.y);
+  if(_ammo<=0){
+    var fs=_score;
+    setTimeout(function(){_active=false;cancelAnimationFrame(_raf);_raf=null;po_showDone(fs);},400);
+  }
+}
+
+// ── FX ──
+function po_muzzle(){
+  var fx=document.getElementById('po-fx');if(!fx)return;
+  var el=document.createElement('div');
+  el.style.cssText='position:absolute;left:'+(_aim.x-11)+'px;top:'+(_aim.y-11)+'px;width:22px;height:22px;pointer-events:none;';
+  el.innerHTML='<svg width="22" height="22" viewBox="0 0 28 28"><circle cx="14" cy="14" r="9" fill="rgba(255,200,50,0.9)"/><circle cx="14" cy="14" r="4" fill="white"/></svg>';
+  fx.appendChild(el);setTimeout(function(){if(el.parentNode)el.parentNode.removeChild(el);},90);
+}
+function po_spawnFloat(txt,x,y,color){
+  var fx=document.getElementById('po-fx');if(!fx)return;
+  var el=document.createElement('div');el.className='pg-float';el.style.color=color;
+  el.style.left=(x-14)+'px';el.style.top=(y-24)+'px';el.textContent=txt;
+  fx.appendChild(el);setTimeout(function(){if(el.parentNode)el.parentNode.removeChild(el);},820);
+}
+function po_spawnMiss(x,y){
+  var fx=document.getElementById('po-fx');if(!fx)return;
+  var el=document.createElement('div');el.className='pg-miss';
+  el.style.left=(x-16)+'px';el.style.top=(y-8)+'px';el.textContent='ISKA';
+  fx.appendChild(el);setTimeout(function(){if(el.parentNode)el.parentNode.removeChild(el);},650);
+}
+
+// ── AMMO ──
+function po_updAmmo(n){
+  var el=document.getElementById('po-ammo');if(!el)return;
+  var h='';for(var i=0;i<6;i++)h+='<div class="po-b '+(i<n?'on':'off')+'"></div>';
+  el.innerHTML=h;
+}
+
+// ── CD ──
+function po_cdLeft(){return Math.max(0,(+localStorage.getItem(PG_KEY)||0)-Date.now());}
+function po_fmtCd(ms){var m=Math.floor(ms/60000),s=Math.floor((ms%60000)/1000);return m+'dk '+String(s).padStart(2,'0')+'sn';}
+
+// ── SCREENS ──
+function po_showIdle(){
+  var sc=document.getElementById('po-screen');sc.classList.remove('off');
+  sc.innerHTML='<div style="font-family:\'Bebas Neue\',sans-serif;font-size:32px;color:#111;letter-spacing:4px;">SHOOTING RANGE</div>'
+    +'<div style="font-family:\'Oswald\',sans-serif;font-size:11px;color:#aaa;letter-spacing:1px;margin:2px 0 16px;">+ İLE NİŞAN AL · KIRMIZI BUTONA ATEŞ ET</div>'
+    +'<button onclick="po_start()" style="background:#C9A84C;border:none;color:#111;font-family:\'Bebas Neue\',sans-serif;font-size:20px;letter-spacing:3px;padding:13px 44px;cursor:pointer;border-radius:2px;box-shadow:0 4px 0 #8B6914;">HAZIR</button>';
+}
+function po_showCd(ms){
+  var sc=document.getElementById('po-screen');sc.classList.remove('off');
+  sc.innerHTML='<div style="font-family:\'Oswald\',sans-serif;font-size:11px;color:#ef4444;font-weight:700;letter-spacing:2px;">⏳ COOLDOWN</div>'
+    +'<div id="po-cd-val" style="font-family:\'Bebas Neue\',sans-serif;font-size:44px;color:#C9A84C;letter-spacing:2px;">'+po_fmtCd(ms)+'</div>'
+    +'<div style="font-family:\'Oswald\',sans-serif;font-size:10px;color:#aaa;margin-top:4px;letter-spacing:1px;">Sonraki antrenman için bekle</div>';
+  clearInterval(_cdInt);
+  _cdInt=setInterval(function(){var cd=po_cdLeft(),el=document.getElementById('po-cd-val');if(!el){clearInterval(_cdInt);return;}if(cd<=0){clearInterval(_cdInt);po_showIdle();return;}el.textContent=po_fmtCd(cd);},1000);
+}
+function po_showDone(score){
+  var win=score>=10;
+  if(win){DEMO_KS=Math.min(100,+(DEMO_KS+PG_KS_GAIN).toFixed(4));document.getElementById('po-ks-val').textContent=DEMO_KS.toFixed(2);document.getElementById('po-ks-fill').style.height=DEMO_KS+'%';document.getElementById('ks-lbl').textContent=DEMO_KS.toFixed(2);}
+  localStorage.setItem(PG_KEY,Date.now()+PG_CD);
+  document.getElementById('po-tgts').innerHTML='';document.getElementById('po-fx').innerHTML='';
+  var sc=document.getElementById('po-screen');sc.classList.remove('off');
+  sc.innerHTML='<div style="font-family:\'Oswald\',sans-serif;font-size:10px;color:#aaa;letter-spacing:2px;font-weight:700;">BİTTİ</div>'
+    +'<div style="font-family:\'Bebas Neue\',sans-serif;font-size:80px;color:#111;line-height:1;">'+score+'</div>'
+    +'<div class="po-badge '+(win?'win':'lose')+'">'+(win?'🏅 +'+PG_KS_GAIN+' KS KAZANDIN!':'Hedef: 10pt · '+(10-score)+' eksik')+'</div>'
+    +'<div id="po-cd-val" style="font-family:\'Bebas Neue\',sans-serif;font-size:28px;color:#C9A84C;margin-top:12px;">'+po_fmtCd(PG_CD)+'</div>';
+  clearInterval(_cdInt);
+  _cdInt=setInterval(function(){var cd=po_cdLeft(),el=document.getElementById('po-cd-val');if(!el){clearInterval(_cdInt);return;}if(cd<=0){clearInterval(_cdInt);po_showIdle();return;}el.textContent=po_fmtCd(cd);},1000);
+}
+
+// ── START ──
+function po_start(){
+  if(po_cdLeft()>0) return;
+  var area=document.getElementById('po-area');
+  _areaW=area.offsetWidth; _areaH=area.offsetHeight;
+  _aim={x:_areaW/2, y:_areaH/2};
+  _score=0; _ammo=6;
+  document.getElementById('po-score-val').textContent='0';
+  po_updAmmo(6);
+  po_spawnTargets();
+  document.getElementById('po-screen').classList.add('off');
+  document.getElementById('po-aim').style.display='block';
+  _active=true;
+  _raf=requestAnimationFrame(po_loop);
+}
+
+// ── INIT ──
+(function(){
+  po_updAmmo(6);
+  document.getElementById('po-ks-fill').style.height=DEMO_KS+'%';
+  var cd=po_cdLeft();
+  if(cd>0) po_showCd(cd); else po_showIdle();
+})();
+</script>
+</body>
+</html>
