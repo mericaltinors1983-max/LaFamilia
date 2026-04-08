@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>LaFamilia</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
+
+<style>
+@font-face{
+  font-family:'CorleoneDue';
+  src:url('https://raw.githubusercontent.com/mericaltinors1983-max/LaFamilia/main/CorleoneDue-Wp8v.ttf') format('truetype');
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{width:100%;height:100%;overflow:hidden;}
+body{
+  font-family:'CorleoneDue','Bebas Neue',sans-serif;
+  background:#fff;color:#111;
+  position:fixed;inset:0;
+  display:flex;flex-direction:column;
+  text-transform:uppercase;
+  user-select:none;-webkit-user-select:none;
+}
+
+/* ── ANIMASYONLAR ── */
+@keyframes hint{0%,100%{opacity:.4;}50%{opacity:.9;}}
+@keyframes motto{0%,100%{opacity:.45;}50%{opacity:.75;}}
+@keyframes tick{0%{transform:translateX(0);}100%{transform:translateX(-50%);}}
+
+/* ── TOP NAV ── */
+#top-nav{flex-shrink:0;background:#fff;border-bottom:2px solid #111;}
+.nav-row{display:flex;height:34px;border-bottom:1px solid #e8e8e8;}
+.nav-row:last-child{border-bottom:none;}
+.nav-item{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  cursor:pointer;border-right:1px solid #e8e8e8;position:relative;gap:1px;
+}
+.nav-item:last-child{border-right:none;}
+.nav-item:active{background:#f0f0f0;}
+.nav-item img{width:19px;height:19px;object-fit:contain;}
+.nav-item span{font-family:'Oswald',sans-serif;font-size:6px;letter-spacing:.4px;color:#666;line-height:1;white-space:nowrap;}
+.nav-item.on{border-bottom:2px solid #111;}
+.nav-badge{
+  position:absolute;top:2px;right:2px;
+  background:#c62828;color:#fff;
+  font-size:6px;width:9px;height:9px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+}
+
+/* ── PROGRESS BAR ── */
+#prog{
+  flex-shrink:0;height:40px;background:#fff;
+  border-bottom:1px solid #e0e0e0;
+  display:flex;align-items:center;padding:0 4px;gap:4px;
+}
+#pb-animal{width:26px;height:26px;object-fit:contain;flex-shrink:0;}
+#pb-mid{flex:1;display:flex;gap:4px;}
+.pb-col{flex:1;display:flex;flex-direction:column;gap:2px;}
+.pb-row{display:flex;align-items:center;gap:2px;}
+.pb-lbl{font-family:'Oswald',sans-serif;font-size:6px;color:#aaa;width:16px;text-align:right;flex-shrink:0;}
+.pb-segs{display:flex;gap:1px;flex:1;}
+.pbs{width:3px;height:4px;border-radius:1px;flex-shrink:0;}
+.pbs.can{background:#22c55e;}.pbs.def{background:#3b82f6;}
+.pbs.xp{background:#C9A84C;}.pbs.ks{background:#ef4444;}
+.pbs.off{background:#e0e0e0;}
+.pb-pct{font-family:'Oswald',sans-serif;font-size:7px;color:#555;width:20px;text-align:right;flex-shrink:0;}
+#pb-right{display:flex;align-items:center;gap:3px;flex-shrink:0;}
+.pb-stats{display:flex;flex-direction:column;gap:1px;}
+.pb-stat{display:flex;align-items:center;gap:2px;}
+.pb-stat img{width:12px;height:12px;object-fit:contain;}
+.pb-val{font-family:'Bebas Neue',sans-serif;font-size:11px;color:#111;letter-spacing:.3px;line-height:1;white-space:nowrap;}
+#pb-city{display:flex;flex-direction:column;align-items:center;gap:0;border-left:1px solid #e0e0e0;padding-left:4px;}
+#pb-city img{width:20px;height:20px;object-fit:contain;}
+#pb-city span{font-family:'Oswald',sans-serif;font-size:5px;color:#666;letter-spacing:.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:36px;}
+
+/* ── TICKER ── */
+#ticker{
+  flex-shrink:0;height:20px;background:#fff;
+  border-bottom:2.5px solid #111;
+  display:flex;align-items:center;overflow:hidden;
+}
+#ticker-left{display:flex;align-items:center;gap:4px;padding:0 6px;border-right:1px solid #e0e0e0;flex-shrink:0;}
+.odot{width:5px;height:5px;border-radius:50%;background:#22c55e;}
+#ocnt{font-family:'Oswald',sans-serif;font-size:8px;color:#555;}
+#ticker-wrap{flex:1;overflow:hidden;display:flex;align-items:center;}
+#ticker-track{
+  display:flex;align-items:center;white-space:nowrap;
+  animation:tick 30s linear infinite;
+  font-family:'Oswald',sans-serif;font-size:9px;letter-spacing:.3px;
+}
+.tn{color:#c62828;font-weight:700;}.ty{color:#B8860B;font-weight:700;}.tq{color:#555;}
+.tsep{color:#C9A84C;margin:0 10px;}
+
+/* ── ANA ALAN ── */
+#main{flex:1;position:relative;overflow:hidden;min-height:0;}
+
+/* ── SCREEN SİSTEMİ ── */
+.screen{display:none;position:absolute;inset:0;flex-direction:column;background:#fff;}
+.screen.on{display:flex;}
+#screen-harita{display:block;position:absolute;inset:0;}
+
+/* ── 4 KATMAN ── */
+.katman{position:absolute;inset:0;display:none;flex-direction:column;}
+
+/* K1 */
+#k1{background:#fff;cursor:pointer;z-index:1;align-items:center;justify-content:center;}
+#k1 .dunya-img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;}
+#k1 .logo-img{position:absolute;top:8px;left:50%;transform:translateX(-50%);height:104px;object-fit:contain;pointer-events:none;z-index:2;}
+#k1 .motto{position:absolute;top:116px;left:calc(50% + 16px);transform:translateX(-50%);font-family:'CorleoneDue',sans-serif;font-size:15px;letter-spacing:4px;color:#111;opacity:.6;white-space:nowrap;pointer-events:none;z-index:2;animation:motto 4s ease-in-out infinite;}
+#k1 .hint{position:absolute;bottom:90px;left:50%;transform:translateX(-50%);font-family:'Oswald',sans-serif;font-size:10px;letter-spacing:3px;color:rgba(0,0,0,.4);white-space:nowrap;pointer-events:none;animation:hint 2s ease-in-out infinite;}
+
+/* K2 */
+#k2{background:#fff;z-index:2;}
+.k-header{height:44px;flex-shrink:0;display:flex;align-items:center;border-bottom:2px solid #111;padding:0 6px;gap:8px;background:#fff;}
+.k-back{background:none;border:none;cursor:pointer;font-size:28px;color:#111;padding:4px 8px;line-height:1;font-family:sans-serif;}
+.k-back:active{opacity:.5;}
+.k-title{font-family:'CorleoneDue',sans-serif;font-size:14px;letter-spacing:2px;color:#111;flex:1;}
+.flag-grid{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;overflow:auto;padding:4px;}
+.flag-row{display:flex;justify-content:center;gap:2px;}
+.flag-btn{background:none;border:none;cursor:pointer;padding:4px;transition:transform .1s;}
+.flag-btn:active{transform:scale(.88);}
+.flag-btn img{width:84px;height:84px;object-fit:contain;display:block;}
+
+/* K3 */
+#k3{background:#fff;z-index:3;}
+/* #k3-svg ve #k3-cards kaldırıldı — yeni sistem ulke-svg / ulke-city-cards kullanıyor */
+.ccard{display:flex;align-items:center;padding:6px 10px;border:1px solid #e0e0e0;cursor:pointer;gap:8px;flex-shrink:0;}
+.ccard:active{background:#f5f5f5;}
+.ccard.mine{border-color:#C9A84C;}
+.ccard-ico{width:28px;height:28px;object-fit:contain;flex-shrink:0;border-radius:3px;}
+.ccard-info{flex:1;min-width:0;}
+.ccard-name{font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:1px;color:#111;line-height:1.1;}
+.ccard-name.gold{color:#C9A84C;}
+.ccard-bw{display:flex;align-items:center;gap:4px;margin-top:2px;}
+.ccard-bar{display:flex;gap:1px;}
+.cseg{width:4px;height:4px;border-radius:1px;}
+.cseg.on{background:#ef4444;}.cseg.off{background:#e0e0e0;}
+.ccard-fam{font-family:'Oswald',sans-serif;font-size:8px;color:#888;white-space:nowrap;flex-shrink:0;}
+.ucak-btn{background:none;border:1px solid #e0e0e0;border-radius:4px;font-size:16px;padding:2px 6px;cursor:pointer;flex-shrink:0;}
+
+/* K4 */
+#k4{
+  background-color:#f4efe4;
+  background-image:repeating-linear-gradient(0deg,transparent,transparent 30px,rgba(0,0,0,.012) 31px),
+    repeating-linear-gradient(90deg,transparent,transparent 30px,rgba(0,0,0,.012) 31px);
+  z-index:4;
+}
+#k4 .k-header{background:rgba(244,239,232,.98);border-bottom-color:#8b7355;}
+#k4 .k-back{color:#3a2e1a;}
+#k4 .k-title{color:#3a2e1a;}
+/* #k4-wrap ve #k4-svg kaldırıldı — K4 artık dinamik sehir-panel */
+
+/* GİF OVERLAY */
+#gif-ov{
+  position:absolute;inset:0;z-index:99;
+  background:#fff;
+  display:none;
+  align-items:center;justify-content:center;
+}
+#gif-ov img{width:70%;height:70%;object-fit:contain;position:absolute;top:30%;left:50%;transform:translate(-50%,-50%);}
+#gif-ov button{
+  position:absolute;bottom:20px;right:16px;
+  background:rgba(0,0,0,.6);border:none;color:#fff;
+  font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:2px;
+  padding:8px 16px;cursor:pointer;
+}
+
+/* GİT KARTI */
+#git-card{
+  display:none;position:fixed;bottom:96px;left:50%;transform:translateX(-50%);
+  background:#fff;border:2.5px solid #111;padding:14px 20px;
+  z-index:700;min-width:220px;text-align:center;
+  box-shadow:0 4px 20px rgba(0,0,0,.15);
+}
+#git-card.on{display:block;}
+#git-isim{font-family:'CorleoneDue',sans-serif;font-size:16px;letter-spacing:2px;color:#111;margin-bottom:10px;}
+#git-gid{width:100%;background:#111;color:#fff;border:none;font-family:'CorleoneDue',sans-serif;font-size:13px;letter-spacing:2px;padding:10px;cursor:pointer;}
+#git-x{position:absolute;top:5px;right:8px;background:none;border:none;font-size:15px;color:#aaa;cursor:pointer;}
+
+/* BİNA POPUP */
+#bov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10000;}
+#bov.on{display:block;}
+#bpop{
+  display:none;position:fixed;bottom:86px;left:50%;transform:translateX(-50%);
+  width:290px;background:#fff;border:3px double #111;
+  flex-direction:column;align-items:center;padding:16px;z-index:10001;text-align:center;
+}
+#bpop.on{display:flex;}
+.bpop-img{width:52px;height:52px;object-fit:contain;margin-bottom:8px;}
+.bpop-name{font-family:'CorleoneDue',sans-serif;font-size:16px;letter-spacing:2px;color:#111;margin-bottom:2px;}
+.bpop-tip{font-family:'Oswald',sans-serif;font-size:9px;color:#aaa;letter-spacing:1px;}
+.bpop-yak{font-family:'Oswald',sans-serif;font-size:11px;color:#C9A84C;letter-spacing:1px;margin:8px 0;}
+.bpop-kapat{width:100%;padding:8px;background:#111;color:#fff;border:none;font-family:'CorleoneDue',sans-serif;font-size:12px;letter-spacing:2px;cursor:pointer;}
+
+/* STUB */
+.stub{flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px;}
+.stub-t{font-family:'CorleoneDue',sans-serif;font-size:22px;letter-spacing:3px;color:#ddd;}
+.stub-s{font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:2px;color:#C9A84C;}
+
+/* ── BOTTOM BAR ── */
+#bot-bar{
+  position:fixed;bottom:0;left:0;right:0;height:76px;
+  background:#fff;border-top:2.5px solid #111;
+  display:flex;align-items:stretch;z-index:500;
+}
+.bb{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  cursor:pointer;border-right:1px solid #e0e0e0;gap:2px;padding:3px 0;
+}
+.bb:last-child{border-right:none;}
+.bb:active{transform:scale(.88);background:#f5f5f5;}
+.bb img{width:40px;height:40px;object-fit:contain;display:block;}
+.bb span{font-family:'CorleoneDue',sans-serif;font-size:7px;letter-spacing:.2px;color:#444;white-space:nowrap;line-height:1;}
+</style>
+</head>
+<body>
+
+<!-- TOP NAV -->
+<div id="top-nav">
+  <div class="nav-row">
+    <div class="nav-item" onclick="goS('karakter')"><img src="https://mericaltinors1983-max.github.io/LaFamilia/nav_karakter.png" onerror="this.style.display='none'"><span>KARAKTER</span></div>
+    <div class="nav-item" onclick="goS('envanter')"><img src="https://mericaltinors1983-max.github.io/LaFamilia/nav_envanter.png" onerror="this.style.display='none'"><span>ENVANTER</span></div>
+    <div class="nav-item" onclick="goS('binalar')"><img src="https://mericaltinors1983-max.github.io/LaFamilia/nav_binalar.png" onerror="this.style.display='none'"><span>BİNALAR</span></div>
+    <div class="nav-item on" id="ni-harita" onclick="goS('harita')"><img src="https://mericaltinors1983-max.github.io/LaFamilia/nav_harita.png" onerror="this.style.display='none'"><span>HARİTA</span></div>
+    <div class="nav-item" onclick="goS('mesaj')"><img src="https://mericaltinors1983-max.github.io/LaFamilia/nav_mesaj.png" onerror="this.style.display='none'"><span>MESAJ</span><div class="nav-badge">3</div></div>
+    <div class="nav-item" onclick="goS('bildirim')"><img src="https://mericaltinors1983-max.github.io/LaFamilia/nav_bildirim.png" onerror="this.style.display='none'"><span>BİLDİRİM</span><div class="nav-badge">1</div></div>
+    <div class="nav-item" onclick="goS('etkinlik')"><img src="https://mericaltinors1983-max.github.io/LaFamilia/nav_etkinlik.png" onerror="this.style.display='none'"><span>EVENT</span></div>
+    <div class="nav-item" onclick="goS('ayarlar')"><img src="https://mericaltinors1983-max.github.io/LaFamilia/nav_ayarlar.png" onerror="this.style.display='none'"><span>AYARLAR</span></div>
+  </div>
+  <div class="nav-row">
+    <div class="nav-item" onclick="goS('aile')"><img src="https://mericaltinors1983-max.github.io/LaFamilia/nav_aile.png" onerror="this.style.display='none'"><span>FAMILY</span></div>
+    <div class="nav-item" onclick="goS('suc')"><img src="https://mericaltinors1983-max.github.io/LaFamilia/nav_suc.png" onerror="this.style.display='none'"><span>CRIME</span></div>
+    <div class="nav-item" onclick="goS('banka')"><img src="https://mericaltinors1983-max.github.io/LaFamilia/nav_banka.png" onerror="this.style.display='none'"><span>BANKA</span></div>
+    <div class="nav-item" onclick="goS('casino')"><img src="https://mericaltinors1983-max.github.io/LaFamilia/nav_kumarhane.png" onerror="this.style.display='none'"><span>CASİNO</span></div>
+    <div class="nav-item" onclick="goS('aktivite')"><img src="https://mericaltinors1983-max.github.io/LaFamilia/nav_aktivite.png" onerror="this.style.display='none'"><span>AKTİVİTE</span></div>
+    <div class="nav-item" onclick="goS('yaris')"><img src="https://mericaltinors1983-max.github.io/LaFamilia/nav_yaris.png" onerror="this.style.display='none'"><span>YARIŞ</span></div>
+    <div class="nav-item" onclick="goS('satinal')"><img src="https://mericaltinors1983-max.github.io/LaFamilia/nav_satinal.png" onerror="this.style.display='none'"><span>SATIN AL</span></div>
+    <div class="nav-item" onclick="goS('gazete')"><img src="https://mericaltinors1983-max.github.io/LaFamilia/nav_gazete.png" onerror="this.style.display='none'"><span>GAZETE</span></div>
+  </div>
+</div>
+
+<!-- PROGRESS BAR -->
+<div id="prog">
+  <img id="pb-animal" src="https://mericaltinors1983-max.github.io/LaFamilia/rank_animal_8.png" onerror="this.outerHTML='<span style=font-size:24px>🐺</span>'">
+  <div id="pb-mid">
+    <div class="pb-col">
+      <div class="pb-row"><span class="pb-lbl">CAN</span><div class="pb-segs" id="s-can"></div><span class="pb-pct">72%</span></div>
+      <div class="pb-row"><span class="pb-lbl">XP</span><div class="pb-segs" id="s-xp"></div><span class="pb-pct">62%</span></div>
+    </div>
+    <div class="pb-col">
+      <div class="pb-row"><span class="pb-lbl">DEF</span><div class="pb-segs" id="s-def"></div><span class="pb-pct">45%</span></div>
+      <div class="pb-row"><span class="pb-lbl">KS</span><div class="pb-segs" id="s-ks"></div><span class="pb-pct">26%</span></div>
+    </div>
+  </div>
+  <div id="pb-right">
+    <div class="pb-stats">
+      <div class="pb-stat"><img src="https://mericaltinors1983-max.github.io/LaFamilia/stat_money.png" onerror="this.outerHTML='💲'"><span class="pb-val">$142K</span></div>
+      <div class="pb-stat"><img src="https://mericaltinors1983-max.github.io/LaFamilia/bulletfab.png" onerror="this.outerHTML='🔫'"><span class="pb-val">8.4K</span></div>
+    </div>
+    <div id="pb-city">
+      <img src="https://mericaltinors1983-max.github.io/LaFamilia/city_istanbul.png" onerror="this.style.display='none'">
+      <span>İSTANBUL</span>
+    </div>
+  </div>
+</div>
+
+<!-- TICKER -->
+<div id="ticker">
+  <div id="ticker-left"><div class="odot"></div><span id="ocnt">247</span></div>
+  <div id="ticker-wrap">
+    <div id="ticker-track">
+      <span class="tn">RED_BEAR&nbsp;</span><span class="tq">Moskova'da öldürüldü</span><span class="tsep">✦</span>
+      <span class="ty">JACKPOT!&nbsp;</span><span class="tq">SHADOW_99 $2.4M kazandı</span><span class="tsep">✦</span>
+      <span class="tn">DRAGON_FIST&nbsp;</span><span class="tq">İstanbul'da saldırı</span><span class="tsep">✦</span>
+      <span class="tq">VITO_JR&nbsp;</span><span class="tq">yeni aile kurdu — İzmir</span><span class="tsep">✦</span>
+      <span class="ty">+$18,400&nbsp;</span><span class="tq">Napoli kaçakçılık geliri</span><span class="tsep">✦</span>
+      <span class="tn">RED_BEAR&nbsp;</span><span class="tq">Moskova'da öldürüldü</span><span class="tsep">✦</span>
+      <span class="ty">JACKPOT!&nbsp;</span><span class="tq">SHADOW_99 $2.4M kazandı</span><span class="tsep">✦</span>
+      <span class="tn">DRAGON_FIST&nbsp;</span><span class="tq">İstanbul'da saldırı</span><span class="tsep">✦</span>
+      <span class="tq">VITO_JR&nbsp;</span><span class="tq">yeni aile kurdu — İzmir</span><span class="tsep">✦</span>
+      <span class="ty">+$18,400&nbsp;</span><span class="tq">Napoli kaçakçılık geliri</span><span class="tsep">✦</span>
+    </div>
+  </div>
+</div>
+
+<!-- ANA ALAN -->
+<div id="main" style="padding-bottom:76px;">
+
+  <!-- HARİTA EKRANI -->
+  <div id="screen-harita">
+
+    <!-- GİF OVERLAY — tamamen JS ile yönetilir -->
+    <div id="gif-ov">
+      <img id="gif-img" src="">
+      <button onclick="gifAtla()">ATLA ▶</button>
+    </div>
+
+    <!-- KATMAN 1 -->
+    <div id="k1" class="katman" onclick="goK(2)">
+      <img class="dunya-img" src="https://mericaltinors1983-max.github.io/LaFamilia/dunya.png" onerror="this.style.display='none'">
+      <img class="logo-img" src="https://mericaltinors1983-max.github.io/LaFamilia/lafamilia_logo.png" onerror="this.style.display='none'">
+      <span class="motto">The World Is Yours</span>
+      <span class="hint">DOKUNARAK BAŞLA</span>
+    </div>
+
+    <!-- KATMAN 2 -->
+    <div id="k2" class="katman">
+      <div class="k-header">
+        <button class="k-back" onclick="goK(1)">◀</button>
+        <span class="k-title">ÜLKE SEÇ</span>
+      </div>
+      <div class="flag-grid">
+        <div class="flag-row">
+          <button class="flag-btn" onclick="ulkeAc('turkey','TÜRKİYE','turkey.gif','792')"><img src="https://mericaltinors1983-max.github.io/LaFamilia/country_turkey.png" onerror="this.outerHTML='<span style=font-size:50px>🇹🇷</span>'"></button>
+          <button class="flag-btn" onclick="ulkeAc('italy','İTALYA','italy.gif','380')"><img src="https://mericaltinors1983-max.github.io/LaFamilia/country_italy.png" onerror="this.outerHTML='<span style=font-size:50px>🇮🇹</span>'"></button>
+          <button class="flag-btn" onclick="ulkeAc('germany','ALMANYA','almanya.gif','276')"><img src="https://mericaltinors1983-max.github.io/LaFamilia/country_germany.png" onerror="this.outerHTML='<span style=font-size:50px>🇩🇪</span>'"></button>
+        </div>
+        <div class="flag-row">
+          <button class="flag-btn" onclick="ulkeAc('russia','RUSYA','rusya.gif','643')"><img src="https://mericaltinors1983-max.github.io/LaFamilia/arussia.png" onerror="this.outerHTML='<span style=font-size:50px>🇷🇺</span>'"></button>
+          <button class="flag-btn" onclick="ulkeAc('china','ÇİN','cin.gif','156')"><img src="https://mericaltinors1983-max.github.io/LaFamilia/country_china.png" onerror="this.outerHTML='<span style=font-size:50px>🇨🇳</span>'"></button>
+          <button class="flag-btn" onclick="ulkeAc('japan','JAPONYA','caponya.gif','392')"><img src="https://mericaltinors1983-max.github.io/LaFamilia/country_japan.png" onerror="this.outerHTML='<span style=font-size:50px>🇯🇵</span>'"></button>
+        </div>
+        <div class="flag-row">
+          <button class="flag-btn" onclick="ulkeAc('usa','ABD','amerika.gif','840')"><img src="https://mericaltinors1983-max.github.io/LaFamilia/country_usa.png" onerror="this.outerHTML='<span style=font-size:50px>🇺🇸</span>'"></button>
+          <button class="flag-btn" onclick="ulkeAc('mexico','MEKSİKA','meksika.gif','484')"><img src="https://mericaltinors1983-max.github.io/LaFamilia/country_mexico.png" onerror="this.outerHTML='<span style=font-size:50px>🇲🇽</span>'"></button>
+        </div>
+        <div class="flag-row">
+          <button class="flag-btn" onclick="ulkeAc('brazil','BREZİLYA','brazil.gif','76')"><img src="https://mericaltinors1983-max.github.io/LaFamilia/country_brazil.png" onerror="this.outerHTML='<span style=font-size:50px>🇧🇷</span>'"></button>
+          <button class="flag-btn" onclick="ulkeAc('colombia','KOLOMBİYA','aaacolombia.gif','170')"><img src="https://mericaltinors1983-max.github.io/LaFamilia/country_colombia.png" onerror="this.outerHTML='<span style=font-size:50px>🇨🇴</span>'"></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- KATMAN 3 -->
+    <div id="k3" class="katman">
+      <div id="ulke-harita" style="display:flex;position:absolute;inset:0;background:#ffffff;flex-direction:column;z-index:3;">
+        <div style="display:flex;align-items:center;padding:6px 10px;border-bottom:1px solid #e0e0e0;flex-shrink:0;background:#fff;gap:8px;">
+          <button onclick="closeUlkeHarita()" style="background:none;border:none;cursor:pointer;padding:0;">
+            <img src="https://mericaltinors1983-max.github.io/LaFamilia/back.png" style="height:36px;object-fit:contain;" onerror="this.outerHTML='<button onclick=&quot;closeUlkeHarita()&quot; style=&quot;background:none;border:1px solid #111;color:#111;font-family:CorleoneDue,sans-serif;font-size:13px;padding:5px 12px;cursor:pointer;&quot;>◀ GERİ</button>'">
+          </button>
+          <span id="ulke-harita-isim" style="font-family:'CorleoneDue',sans-serif;font-size:14px;letter-spacing:2px;color:#111;"></span>
+        </div>
+        <div style="flex-shrink:0;position:relative;overflow:hidden;background:#ffffff;">
+          <svg id="ulke-svg" style="width:100%;display:block;"></svg>
+        </div>
+        <div id="ulke-city-cards" style="display:flex;flex-direction:column;gap:0;padding:4px 6px;background:#ffffff;flex:1;min-height:0;overflow:hidden;justify-content:space-evenly;"></div>
+      </div>
+    </div>
+
+    <!-- KATMAN 4 — artık dinamik, sehir-panel k3 içinde açılır -->
+    <div id="k4" class="katman"></div>
+
+  </div>
+
+  <!-- STUB EKRANLAR -->
+  <div id="screen-karakter" class="screen"><div class="stub"><span class="stub-t">KARAKTER</span><span class="stub-s">YAKINDA</span></div></div>
+  <div id="screen-envanter" class="screen"><div class="stub"><span class="stub-t">ENVANTER</span><span class="stub-s">YAKINDA</span></div></div>
+  <div id="screen-binalar" class="screen"><div class="stub"><span class="stub-t">BİNALAR</span><span class="stub-s">YAKINDA</span></div></div>
+  <div id="screen-mesaj" class="screen"><div class="stub"><span class="stub-t">MESAJ</span><span class="stub-s">YAKINDA</span></div></div>
+  <div id="screen-bildirim" class="screen"><div class="stub"><span class="stub-t">BİLDİRİM</span><span class="stub-s">YAKINDA</span></div></div>
+  <div id="screen-etkinlik" class="screen"><div class="stub"><span class="stub-t">EVENT</span><span class="stub-s">YAKINDA</span></div></div>
+  <div id="screen-ayarlar" class="screen"><div class="stub"><span class="stub-t">AYARLAR</span><span class="stub-s">YAKINDA</span></div></div>
+  <div id="screen-aile" class="screen"><div class="stub"><span class="stub-t">AİLE</span><span class="stub-s">YAKINDA</span></div></div>
+  <div id="screen-suc" class="screen"><div class="stub"><span class="stub-t">CRIME</span><span class="stub-s">YAKINDA</span></div></div>
+  <div id="screen-banka" class="screen"><div class="stub"><span class="stub-t">BANKA</span><span class="stub-s">YAKINDA</span></div></div>
+  <div id="screen-casino" class="screen"><div class="stub"><span class="stub-t">CASİNO</span><span class="stub-s">YAKINDA</span></div></div>
+  <div id="screen-aktivite" class="screen"><div class="stub"><span class="stub-t">AKTİVİTE</span><span class="stub-s">YAKINDA</span></div></div>
+  <div id="screen-yaris" class="screen"><div class="stub"><span class="stub-t">YARIŞ</span><span class="stub-s">YAKINDA</span></div></div>
+  <div id="screen-satinal" class="screen"><div class="stub"><span class="stub-t">SATIN AL</span><span class="stub-s">YAKINDA</span></div></div>
+  <div id="screen-gazete" class="screen"><div class="stub"><span class="stub-t">GAZETE</span><span class="stub-s">YAKINDA</span></div></div>
+
+</div>
+
+<!-- GİT KARTI -->
+<div id="git-card">
+  <button id="git-x" onclick="document.getElementById('git-card').classList.remove('on')">✕</button>
+  <div id="git-isim">İSTANBUL</div>
+  <button id="git-gid">✈ BU ŞEHİRE GİT — YAKINDA</button>
+</div>
+
+<!-- BİNA POPUP -->
+<div id="bov" onclick="bKapat()"></div>
+<div id="bpop">
+  <img id="bpop-img" class="bpop-img" src="" onerror="this.style.display='none'">
+  <div id="bpop-name" class="bpop-name"></div>
+  <div id="bpop-tip" class="bpop-tip"></div>
+  <div class="bpop-yak">— YAKINDA —</div>
+  <button class="bpop-kapat" onclick="bKapat()">KAPAT</button>
+</div>
+
+<!-- BOTTOM BAR -->
+<div id="bot-bar">
+  <div class="bb"><img src="https://mericaltinors1983-max.github.io/LaFamilia/gif_offender.gif" onerror="this.outerHTML='<span style=font-size:28px>🔪</span>'"><span>OFFENDER</span></div>
+  <div class="bb"><img src="https://mericaltinors1983-max.github.io/LaFamilia/gif_armedrob.gif" onerror="this.outerHTML='<span style=font-size:28px>🔫</span>'"><span>ROBBERY</span></div>
+  <div class="bb"><img src="https://mericaltinors1983-max.github.io/LaFamilia/gif_wheelman.gif" onerror="this.outerHTML='<span style=font-size:28px>🚗</span>'"><span>WHEELMAN</span></div>
+  <div class="bb"><img src="https://mericaltinors1983-max.github.io/LaFamilia/gif_insidejob.gif" onerror="this.outerHTML='<span style=font-size:28px>🕵️</span>'"><span>INSIDE JOB</span></div>
+  <div class="bb"><img src="https://mericaltinors1983-max.github.io/LaFamilia/gif_felony.gif" onerror="this.outerHTML='<span style=font-size:28px>💣</span>'"><span>FELONY</span></div>
+  <div class="bb"><img src="https://mericaltinors1983-max.github.io/LaFamilia/gif_bustout.gif" onerror="this.outerHTML='<span style=font-size:28px>⛓️</span>'"><span>BUST OUT</span></div>
+  <div class="bb"><img src="https://mericaltinors1983-max.github.io/LaFamilia/gif_kacakcilik.gif" onerror="this.outerHTML='<span style=font-size:28px>📦</span>'"><span>KAÇAKCILIK</span></div>
+  <div class="bb"><img src="https://mericaltinors1983-max.github.io/LaFamilia/gif_poligon.gif" onerror="this.outerHTML='<span style=font-size:28px>🎯</span>'"><span>POLİGON</span></div>
+</div>
+
+<script>
+var BASE='https://mericaltinors1983-max.github.io/LaFamilia/';
+var AK_ULKE=null, GIF_T=null;
+
+/* ════ PIXEL BAR ════ */
+function bar(id,pct,tip){
+  var el=document.getElementById(id); if(!el)return;
+  el.innerHTML='';
+  var N=14,d=Math.round(pct/100*N);
+  for(var i=0;i<N;i++){
+    var s=document.createElement('div');
+    s.className='pbs '+(i<d?tip:'off');
+    el.appendChild(s);
+  }
+}
+
+/* ════ NAV SCREEN ════ */
+function goS(id){
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('on');});
+  document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('on');});
+  var sh=document.getElementById('screen-harita');
+  var sc=document.getElementById('screen-'+id);
+  if(sc){
+    sh.style.display='none';
+    sc.classList.add('on');
+  } else {
+    sh.style.display='block';
+  }
+  var ni=document.getElementById('ni-'+id);
+  if(ni) ni.classList.add('on');
+}
+
+/* ════ 4 KATMAN ════
+   Kritik kural: goK sadece display style yönetir,
+   başka hiçbir şeye dokunmaz.
+════ */
+function goK(n){
+  // önce hepsini gizle
+  document.getElementById('k1').style.display='none';
+  document.getElementById('k2').style.display='none';
+  document.getElementById('k3').style.display='none';
+  document.getElementById('k4').style.display='none';
+  // sonra sadece istenilenini aç
+  document.getElementById('k'+n).style.display='flex';
+  // k4 değilse pinleri temizle
+  if(n!==4) document.querySelectorAll('.bpin').forEach(function(e){e.remove();});
+}
+
+/* ════ GİF → K3 ════ */
+function ulkeAc(id,isim,gif,topoId){
+  AK_ULKE={id:id,isim:isim,topoId:topoId};
+  var ov=document.getElementById('gif-ov');
+  var img=document.getElementById('gif-img');
+  img.onerror=gifAtla;
+  img.src=BASE+gif;
+  ov.style.display='flex';
+  clearTimeout(GIF_T);
+  GIF_T=setTimeout(gifAtla,3000);
+}
+
+function gifAtla(){
+  clearTimeout(GIF_T);
+  document.getElementById('gif-ov').style.display='none';
+  document.getElementById('gif-img').src='';
+  if(AK_ULKE){
+    goK(3);
+    openUlkeHarita(AK_ULKE.topoId);
+  }
+}
+
+/* ════ K3 & K4 — ORİJİNAL PROTOTİPTEN ════ */
+
+/* ════ K3 & K4 — PROTOTYPE'DAN ALINMIŞ YENİ SİSTEM ════ */
+
+// ── ÜLKE HARİTASI ──────────────────────────────────────
+var _ulkeWorldData = null;
+
+function loadWorldData(cb) {
+  if (_ulkeWorldData) { cb(_ulkeWorldData); return; }
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET','https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json');
+  xhr.onload = function() {
+    _ulkeWorldData = JSON.parse(xhr.responseText);
+    cb(_ulkeWorldData);
+  };
+  xhr.onerror = function() { cb(null); };
+  xhr.send();
+}
+
+var ULKE_NAMES = {'792':'TÜRKİYE','840':'ABD','643':'RUSYA','380':'İTALYA',
+  '484':'MEKSİKA','156':'ÇİN','276':'ALMANYA','170':'KOLOMBİYA','392':'JAPONYA','76':'BREZİLYA'};
+var ULKE_COLORS = {'792':'#E30A17','840':'#3C3B6E','643':'#003DA5','380':'#009246',
+  '484':'#006847','156':'#DE2910','276':'#FFCC00','170':'#FCD116','392':'#BC002D','76':'#009C3B'};
+
+var COUNTRY_DATA = {
+  '792': { name:'TÜRKİYE', cities:[
+    { id:'istanbul',   name:'İSTANBUL',   lat:41.01, lon:28.95, color:'#e63946', family:'Kara Aile',         icon:'🏙️' },
+    { id:'izmir',      name:'İZMİR',      lat:38.42, lon:27.14, color:'#c1121f', family:'Deniz Ailesi',      icon:'⚓' },
+    { id:'diyarbakir', name:'DİYARBAKIR', lat:37.91, lon:40.23, color:'#ff6b6b', family:'Doğu Ailesi',       icon:'🏛️' },
+    { id:'trabzon',    name:'TRABZON',    lat:41.00, lon:39.72, color:'#e63946', family:'Karadeniz Ailesi',  icon:'🌊' },
+  ]},
+  '380': { name:'İTALYA', cities:[
+    { id:'napoli',  name:'NAPOLİ',  lat:40.85, lon:14.27, color:'#e63946', family:'La Camorra',  icon:'🍕' },
+    { id:'sicilya', name:'SİCİLYA', lat:37.60, lon:14.01, color:'#c1121f', family:'Cosa Nostra', icon:'🌿' },
+    { id:'roma',    name:'ROMA',    lat:41.90, lon:12.49, color:'#ff6b6b', family:'Il Sindacato', icon:'⚔️' },
+    { id:'milano',  name:'MİLANO',  lat:45.46, lon:9.19,  color:'#e63946', family:'La Famiglia', icon:'💼' },
+  ]},
+  '840': { name:'ABD', cities:[
+    { id:'newyork', name:'NEW YORK', lat:40.71, lon:-74.01,  color:'#3C3B6E', family:'Five Families', icon:'🗽' },
+    { id:'chicago', name:'CHİCAGO',  lat:41.88, lon:-87.63,  color:'#5555aa', family:'The Outfit',    icon:'🏙️' },
+    { id:'miami',   name:'MİAMİ',   lat:25.77, lon:-80.19,  color:'#3C3B6E', family:'Cuban Mob',     icon:'🌴' },
+    { id:'lasvegas',name:'LAS VEGAS',lat:36.17, lon:-115.14, color:'#5555aa', family:'Desert Kings',  icon:'🎰' },
+  ]},
+  '643': { name:'RUSYA', cities:[
+    { id:'moskova',      name:'MOSKOVA',       lat:55.75, lon:37.62,  color:'#003DA5', family:'Bratva',       icon:'🐻' },
+    { id:'stpetersburg', name:'ST. PETERSBURG', lat:59.93, lon:30.32,  color:'#1144bb', family:'Nevsky Bratva', icon:'🏰' },
+    { id:'kazan',        name:'KAZAN',          lat:55.79, lon:49.12,  color:'#003DA5', family:'Tatar Bratva',  icon:'🕌' },
+    { id:'vladivostok',  name:'VLADİVOSTOK',   lat:43.12, lon:131.90, color:'#1144bb', family:'Far East MC',   icon:'⚓' },
+  ]},
+  '484': { name:'MEKSİKA', cities:[
+    { id:'mexicocity',  name:'MEKSİKO',     lat:19.43, lon:-99.13,  color:'#006847', family:'Sinaloa',     icon:'🌵' },
+    { id:'guadalajara', name:'GUADALAJARA', lat:20.66, lon:-103.35, color:'#228833', family:'Jalisco',     icon:'🌮' },
+    { id:'monterrey',   name:'MONTERREY',   lat:25.67, lon:-100.31, color:'#006847', family:'Gulf Cartel', icon:'🏜️' },
+    { id:'tijuana',     name:'TİJUANA',     lat:32.52, lon:-117.03, color:'#228833', family:'Arellano',    icon:'🛃' },
+  ]},
+  '156': { name:'ÇİN', cities:[
+    { id:'sanghay',  name:'ŞANGAY',   lat:31.23, lon:121.47, color:'#DE2910', family:'Shanghai Triad',     icon:'🏮' },
+    { id:'pekin',    name:'PEKİN',    lat:39.90, lon:116.40, color:'#cc2200', family:'Red Dragon',         icon:'🏯' },
+    { id:'shenzhen', name:'SHENZHEN', lat:22.54, lon:114.06, color:'#DE2910', family:'Shenzhen Syndicate', icon:'🐉' },
+    { id:'hongkong', name:'HONG KONG',lat:22.32, lon:114.17, color:'#cc2200', family:'14K Triad',          icon:'🌃' },
+  ]},
+  '276': { name:'ALMANYA', cities:[
+    { id:'berlin',    name:'BERLİN',    lat:52.52, lon:13.40, color:'#333333', family:'Berlin OC',   icon:'🦅' },
+    { id:'hamburg',   name:'HAMBURG',   lat:53.55, lon:10.00, color:'#555555', family:'Harbor Mob',  icon:'⚓' },
+    { id:'munich',    name:'MÜNİH',     lat:48.14, lon:11.58, color:'#333333', family:'Bayern Gang', icon:'🍺' },
+    { id:'frankfurt', name:'FRANKFURT', lat:50.11, lon:8.68,  color:'#555555', family:'Bank Wolves', icon:'💰' },
+  ]},
+  '170': { name:'KOLOMBİYA', cities:[
+    { id:'bogota',    name:'BOGOTA',    lat:4.71,  lon:-74.07, color:'#FCD116', family:'Los Capitolios',     icon:'☕' },
+    { id:'medellin',  name:'MEDELLİN',  lat:6.25,  lon:-75.56, color:'#cc9900', family:'Cartel de Medellin', icon:'🌺' },
+    { id:'cali',      name:'CALİ',      lat:3.43,  lon:-76.52, color:'#FCD116', family:'Cartel de Cali',     icon:'🎭' },
+    { id:'cartagena', name:'CARTAGENA', lat:10.39, lon:-75.51, color:'#cc9900', family:'Los Piratas',        icon:'⚓' },
+  ]},
+  '392': { name:'JAPONYA', cities:[
+    { id:'tokyo',    name:'TOKYO',    lat:35.69, lon:139.69, color:'#BC002D', family:'Yakuza Kanto',  icon:'🗼' },
+    { id:'osaka',    name:'OSAKA',    lat:34.69, lon:135.50, color:'#990022', family:'Yakuza Kansai', icon:'🏯' },
+    { id:'kyoto',    name:'KYOTO',    lat:35.01, lon:135.76, color:'#BC002D', family:'Kyoto-kai',     icon:'⛩️' },
+    { id:'yokohama', name:'YOKOHAMA', lat:35.44, lon:139.64, color:'#990022', family:'Yokohama-kai',  icon:'🌸' },
+  ]},
+  '76': { name:'BREZİLYA', cities:[
+    { id:'saopaulo',  name:'SÃO PAULO',    lat:-23.55, lon:-46.63, color:'#009C3B', family:'PCC',                  icon:'🏙️' },
+    { id:'rio',       name:'RİO',          lat:-22.91, lon:-43.17, color:'#007722', family:'Comando Vermelho',     icon:'🌴' },
+    { id:'salvador',  name:'SALVADOR',     lat:-12.97, lon:-38.51, color:'#009C3B', family:'Os Baianos',          icon:'🎭' },
+    { id:'fortaleza', name:'FORTALEZA',    lat:-3.72,  lon:-38.54, color:'#007722', family:'Cartel do Nordeste',   icon:'🌿' },
+  ]},
+};
+
+/* K3: Ülke haritasını aç */
+function openUlkeHarita(id) {
+  document.getElementById('ulke-harita-isim').textContent = ULKE_NAMES[id] || id;
+
+  var svgEl = document.getElementById('ulke-svg');
+  svgEl.innerHTML = '';
+  var container = svgEl.parentElement;
+  var w = container.offsetWidth || window.innerWidth;
+  var h = Math.round(w * 0.55);
+  svgEl.setAttribute('viewBox','0 0 '+w+' '+h);
+  svgEl.setAttribute('width', w);
+  svgEl.setAttribute('height', h);
+  svgEl.style.height = h + 'px';
+
+  loadWorldData(function(world) {
+    if (!world) { buildUlkeCityCards(id, (COUNTRY_DATA[id]||{cities:[]}).cities); return; }
+    var d3s = d3.select('#ulke-svg');
+    d3s.selectAll('*').remove();
+
+    var countries = topojson.feature(world, world.objects.countries);
+    var feature = countries.features.find(function(d){
+      return String(d.id)===id || String(d.id)===id.padStart(3,'0');
+    });
+    if (!feature) { buildUlkeCityCards(id, (COUNTRY_DATA[id]||{cities:[]}).cities); return; }
+
+    var drawFeature = feature;
+    if (id === '840') {
+      var coords = feature.geometry.type==='MultiPolygon' ? feature.geometry.coordinates : [feature.geometry.coordinates];
+      var cont = coords.filter(function(poly){
+        var lons=poly[0].map(function(p){return p[0];});
+        var lats=poly[0].map(function(p){return p[1];});
+        return Math.min.apply(null,lons)>-130 && Math.max.apply(null,lons)<-60 && Math.min.apply(null,lats)>20;
+      });
+      if (cont.length) drawFeature={type:'Feature',geometry:{type:'MultiPolygon',coordinates:cont},properties:{}};
+    }
+    if (id === '156') {
+      var c156 = feature.geometry.type==='MultiPolygon' ? feature.geometry.coordinates : [feature.geometry.coordinates];
+      var mainland = c156.filter(function(poly){
+        var lons=poly[0].map(function(p){return p[0];});
+        var lats=poly[0].map(function(p){return p[1];});
+        return (Math.max.apply(null,lons)-Math.min.apply(null,lons))*(Math.max.apply(null,lats)-Math.min.apply(null,lats)) > 5;
+      });
+      if (mainland.length) drawFeature={type:'Feature',geometry:{type:'MultiPolygon',coordinates:mainland},properties:{}};
+    }
+
+    var pad = 20;
+    var proj = id==='643'
+      ? d3.geoMercator().rotate([-100,0]).fitExtent([[pad,pad],[w-pad,h-pad]], feature)
+      : d3.geoMercator().fitExtent([[pad,pad],[w-pad,h-pad]], drawFeature);
+    var path = d3.geoPath().projection(proj);
+    var col = ULKE_COLORS[id] || '#888';
+    var countryData = COUNTRY_DATA[id];
+
+    d3s.append('rect').attr('width',w).attr('height',h).attr('fill','#ffffff');
+
+    var defs = d3s.append('defs');
+    defs.append('clipPath').attr('id','ulke-clip')
+      .append('path').attr('d', path(drawFeature) || '');
+
+    d3s.append('path').datum(drawFeature)
+      .attr('d', path)
+      .attr('fill', col)
+      .attr('fill-opacity', 0.15)
+      .attr('stroke', col)
+      .attr('stroke-width', 1.5);
+
+    if (countryData && countryData.cities.length > 0) {
+      var projected = countryData.cities.map(function(c) {
+        var pt = proj([c.lon, c.lat]);
+        return { city:c, px:pt[0], py:pt[1] };
+      });
+
+      try {
+        var delaunay = d3.Delaunay.from(projected, function(d){return d.px;}, function(d){return d.py;});
+        var voronoi = delaunay.voronoi([0,0,w,h]);
+        var vGroup = d3s.append('g').attr('clip-path','url(#ulke-clip)');
+        projected.forEach(function(d, i) {
+          var cell = voronoi.renderCell(i);
+          if (!cell) return;
+          vGroup.append('path')
+            .attr('d', cell)
+            .attr('fill', d.city.color)
+            .attr('fill-opacity', 0.55)
+            .attr('stroke', '#fff')
+            .attr('stroke-width', 1.5)
+            .style('cursor','pointer')
+            .on('click', (function(city){ return function(){ openSehirHarita(city); }; })(d.city));
+        });
+      } catch(e) {}
+
+      projected.forEach(function(d) {
+        d3s.append('circle')
+          .attr('cx', d.px).attr('cy', d.py).attr('r', 5)
+          .attr('fill','#fff').attr('stroke', d.city.color).attr('stroke-width', 2)
+          .style('pointer-events','none');
+        d3s.append('text')
+          .attr('x', d.px).attr('y', d.py - 9)
+          .attr('text-anchor','middle')
+          .attr('font-size', '9px')
+          .attr('font-family','Bebas Neue, sans-serif')
+          .attr('letter-spacing','0.5px')
+          .attr('fill','#111')
+          .style('pointer-events','none')
+          .text(d.city.name);
+      });
+    }
+
+    d3s.append('path').datum(drawFeature)
+      .attr('d', path)
+      .attr('fill','none')
+      .attr('stroke', col)
+      .attr('stroke-width', 2.5);
+
+    if (countryData) buildUlkeCityCards(id, countryData.cities);
+  });
+}
+
+function buildUlkeCityCards(countryId, cities) {
+  var container = document.getElementById('ulke-city-cards');
+  if (!container) return;
+  container.innerHTML = '';
+  var BASE2 = 'https://mericaltinors1983-max.github.io/LaFamilia/';
+
+  // Sabit pct map — her yüklemede aynı değer
+  var PCT_MAP = {istanbul:68,izmir:55,diyarbakir:42,trabzon:61,napoli:72,sicilya:58,roma:65,milano:70,newyork:75,chicago:63,miami:57,lasvegas:69,moskova:71,stpetersburg:64,kazan:52,vladivostok:48,mexicocity:66,guadalajara:54,monterrey:59,tijuana:51,bogota:62,medellin:74,cali:56,cartagena:60,tokyo:78,osaka:73,kyoto:67,yokohama:70,sanghay:76,pekin:68,shenzhen:72,hongkong:80,berlin:65,hamburg:60,munich:63,frankfurt:68,saopaulo:74,rio:70,salvador:58,fortaleza:55};
+
+  cities.forEach(function(c) {
+    var pct = PCT_MAP[c.id] || 60;
+    var col = c.color || '#e63946';
+
+    var row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;gap:6px;padding:5px 6px;background:#fff;border:1px solid #eee;cursor:pointer;';
+
+    // Emoji önce göster, resim yüklenirse onu kullan
+    var icoWrap = document.createElement('div');
+    icoWrap.style.cssText = 'width:26px;height:26px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:20px;';
+    icoWrap.textContent = c.icon || '\u{1F4CD}';
+    (function(wrap, id, icon) {
+      var img = new Image();
+      img.style.cssText = 'width:26px;height:26px;object-fit:contain;border-radius:4px;';
+      img.onload = function() { wrap.innerHTML = ''; wrap.appendChild(img); };
+      img.src = BASE2 + 'city_' + id + '.png';
+    })(icoWrap, c.id, c.icon);
+    row.appendChild(icoWrap);
+
+    var mid = document.createElement('div');
+    mid.style.cssText = 'flex:1;min-width:0;';
+    mid.innerHTML = '<div style="font-family:\x27Bebas Neue\x27,sans-serif;font-size:11px;letter-spacing:0.5px;color:#111;">' + c.name + '</div>'
+      + '<div style="display:flex;align-items:center;gap:6px;margin-top:2px;">'
+      + '<div style="flex:1;height:6px;background:#eee;overflow:hidden;">'
+      + '<div style="height:100%;width:'+pct+'%;background:repeating-linear-gradient(90deg,'+col+' 0px,'+col+' 4px,#fff 4px,#fff 6px);"></div>'
+      + '</div>'
+      + '<span style="font-size:8px;color:#111;font-family:\x27Bebas Neue\x27,sans-serif;white-space:nowrap;">' + c.family + ' %' + pct + '</span>'
+      + '</div>';
+
+    var arrow = document.createElement('span');
+    arrow.textContent = '›';
+    arrow.style.cssText = 'font-size:21px;color:#ccc;flex-shrink:0;';
+
+    row.appendChild(mid);
+    row.appendChild(arrow);
+    (function(city){ row.onclick = function(){ openSehirHarita(city); }; })(c);
+    container.appendChild(row);
+  });
+}
+
+/* K4: Şehir haritası — dinamik panel, k3 içinde açılır */
+function openSehirHarita(cityData) {
+  var harita = document.getElementById('ulke-harita');
+  var panel = document.getElementById('sehir-panel');
+  if (!panel) {
+    panel = document.createElement('div');
+    panel.id = 'sehir-panel';
+    panel.style.cssText = 'position:absolute;inset:0;background:#0e1a0a;display:none;flex-direction:column;z-index:20;overflow:hidden;';
+    harita.appendChild(panel);
+  }
+  panel.style.display = 'flex';
+  panel.innerHTML =
+    '<div style="display:flex;align-items:center;padding:6px 10px;border-bottom:1px solid #2a4020;flex-shrink:0;gap:8px;background:#0e1a0a;">'
+    + '<button onclick="document.getElementById(\'sehir-panel\').style.display=\'none\'" style="background:#2a4a20;border:1px solid #4a7a30;color:#cfe;font-family:\x27Bebas Neue\x27,sans-serif;font-size:13px;letter-spacing:1px;padding:5px 12px;cursor:pointer;">&#9664; GERİ</button>'
+    + '<span style="font-family:\x27Bebas Neue\x27,sans-serif;font-size:16px;letter-spacing:2px;color:#9fce88;">' + cityData.name + '</span>'
+    + '</div>'
+    + '<div style="flex:1;position:relative;overflow:hidden;"><svg id="sehir-svg" style="width:100%;height:100%;display:block;position:absolute;inset:0;"></svg></div>';
+
+  renderSehirSvg(cityData);
+}
+
+var SEHIR_BINALAR = [
+  {id:'havalimani',    name:'HAVALİMANI',    ico:'✈️', png:'https://mericaltinors1983-max.github.io/LaFamilia/bina_airport.png'},
+  {id:'liman',         name:'LİMAN',         ico:'⚓', png:'https://mericaltinors1983-max.github.io/LaFamilia/building-t.png'},
+  {id:'tren_istasyonu',name:'TREN GARI',      ico:'🚂', png:'https://mericaltinors1983-max.github.io/LaFamilia/building_gar.png'},
+  {id:'banka',         name:'BANKA',         ico:'🏦', png:'https://mericaltinors1983-max.github.io/LaFamilia/building-d.png'},
+  {id:'hapishane',     name:'HAPİSHANE',     ico:'⛓️', png:'https://mericaltinors1983-max.github.io/LaFamilia/building-h.png'},
+  {id:'casino',        name:'CASİNO',        ico:'🎰', png:'https://mericaltinors1983-max.github.io/LaFamilia/building-q.png'},
+  {id:'mermi_fab',     name:'MERMİ FAB',     ico:'🔧', png:'https://mericaltinors1983-max.github.io/LaFamilia/building-k.png'},
+  {id:'labaratuvar',   name:'LAB',           ico:'🧪', png:'https://mericaltinors1983-max.github.io/LaFamilia/building-e.png'},
+  {id:'otel',          name:'OTEL',          ico:'🏨', png:'https://mericaltinors1983-max.github.io/LaFamilia/building-b.png'},
+  {id:'bira_fab',      name:'BİRA FAB',      ico:'🍺', png:'https://mericaltinors1983-max.github.io/LaFamilia/building-l.png'},
+  {id:'bar',           name:'BAR',           ico:'🍸', png:'https://mericaltinors1983-max.github.io/LaFamilia/building-s.png'},
+  {id:'avm',           name:'AVM',           ico:'🏬', png:'https://mericaltinors1983-max.github.io/LaFamilia/building-a.png'},
+  {id:'pawn_shop',     name:'PAWN SHOP',     ico:'💰', png:'https://mericaltinors1983-max.github.io/LaFamilia/building-p.png'},
+  {id:'hastane',       name:'HASTANE',       ico:'🏥', png:'https://mericaltinors1983-max.github.io/LaFamilia/building-i.png'},
+  {id:'viski_fab',     name:'VİSKİ FAB',     ico:'🥃', png:'https://mericaltinors1983-max.github.io/LaFamilia/building-r.png'},
+  {id:'elmas_fab',     name:'ELMAS FAB',     ico:'💎', png:'https://mericaltinors1983-max.github.io/LaFamilia/building-n.png'},
+  {id:'altin_fab',     name:'ALTIN FAB',     ico:'🥇', png:'https://mericaltinors1983-max.github.io/LaFamilia/building-m.png'},
+  {id:'sigara_fab',    name:'SİGARA FAB',    ico:'🚬', png:'https://mericaltinors1983-max.github.io/LaFamilia/building-f.png'},
+  {id:'drone_fab',     name:'DRONE FAB',     ico:'🚁', png:'https://mericaltinors1983-max.github.io/LaFamilia/building-g.png'},
+  {id:'eczane',        name:'ECZANE',        ico:'💊', png:'https://mericaltinors1983-max.github.io/LaFamilia/building-j.png'},
+  {id:'chip_fab',      name:'CHIP FAB',      ico:'⚙️', png:'https://mericaltinors1983-max.github.io/LaFamilia/building-c.png'},
+  {id:'poligon',       name:'POLİGON',       ico:'🎯', png:'https://mericaltinors1983-max.github.io/LaFamilia/building_poligon.png'},
+  {id:'gym',           name:'GYM',           ico:'💪', png:'https://mericaltinors1983-max.github.io/LaFamilia/building_gym.png'},
+  {id:'siginak',       name:'SAFE HOUSE',    ico:'🛡️', png:'https://mericaltinors1983-max.github.io/LaFamilia/building_hastane.png'},
+];
+
+var SEHIR_COORDS = {
+  istanbul:   [[27.60,41.20],[27.80,41.55],[28.20,41.80],[28.70,41.80],[29.00,41.55],[29.10,41.25],[28.95,40.90],[28.60,40.75],[28.20,40.78],[27.85,40.95],[27.62,41.20]],
+  izmir:      [[26.20,38.30],[26.35,38.75],[26.70,39.05],[27.15,39.12],[27.60,39.00],[27.95,38.72],[28.08,38.35],[27.85,37.95],[27.35,37.75],[26.85,37.82],[26.30,38.10],[26.20,38.30]],
+  diyarbakir: [[39.00,37.60],[39.10,38.10],[39.50,38.48],[40.20,38.55],[41.00,38.30],[41.55,37.90],[41.50,37.30],[41.00,36.90],[40.20,36.82],[39.50,37.00],[39.00,37.60]],
+  trabzon:    [[38.90,40.70],[38.90,41.05],[39.30,41.28],[39.80,41.35],[40.40,41.25],[40.95,41.05],[41.10,40.65],[40.80,40.45],[40.20,40.40],[39.50,40.50],[39.00,40.62],[38.90,40.70]],
+  napoli:     [[13.80,40.50],[13.90,40.78],[14.10,41.00],[14.55,41.12],[14.98,40.98],[15.10,40.60],[14.95,40.22],[14.50,40.10],[13.95,40.20],[13.80,40.50]],
+  roma:       [[11.80,41.40],[11.85,41.80],[12.20,42.15],[12.60,42.18],[13.00,42.00],[13.25,41.70],[13.10,41.35],[12.70,41.10],[12.20,41.18],[11.80,41.40]],
+  newyork:    [[-74.26,40.48],[-74.26,40.80],[-73.95,40.92],[-73.70,40.88],[-73.68,40.55],[-74.00,40.45],[-74.26,40.48]],
+  chicago:    [[-88.00,41.58],[-88.00,42.05],[-87.75,42.15],[-87.50,42.00],[-87.48,41.62],[-87.75,41.50],[-88.00,41.58]],
+  moskova:    [[36.70,55.45],[36.70,55.90],[37.20,56.05],[37.90,56.00],[38.20,55.70],[37.95,55.40],[37.35,55.25],[36.70,55.45]],
+  medellin:   [[-75.90,6.05],[-75.92,6.30],[-75.75,6.55],[-75.50,6.52],[-75.40,6.30],[-75.48,6.05],[-75.75,5.90],[-75.90,6.05]],
+  sicilya:    [[12.50,36.80],[12.60,37.20],[13.20,37.80],[13.80,38.20],[14.50,38.30],[15.20,38.10],[15.65,37.90],[15.70,37.50],[15.40,37.00],[14.80,36.60],[14.00,36.50],[13.20,36.60],[12.50,36.80]],
+  milano:     [[8.60,45.20],[8.70,45.60],[9.10,45.90],[9.50,45.80],[9.90,45.60],[10.00,45.20],[9.70,44.90],[9.20,44.80],[8.80,44.90],[8.60,45.20]],
+  miami:      [[-80.60,25.40],[-80.65,25.80],[-80.40,26.10],[-80.10,26.00],[-80.00,25.70],[-80.15,25.40],[-80.40,25.28],[-80.60,25.40]],
+  lasvegas:   [[-115.60,35.85],[-115.60,36.40],[-115.15,36.60],[-114.80,36.40],[-114.75,35.90],[-115.10,35.65],[-115.60,35.85]],
+  stpetersburg: [[29.50,59.60],[29.50,60.20],[30.20,60.40],[30.80,60.30],[31.20,60.00],[30.90,59.65],[30.30,59.50],[29.50,59.60]],
+  kazan:      [[48.70,55.50],[48.70,56.00],[49.20,56.20],[49.80,56.10],[50.10,55.80],[49.80,55.50],[49.20,55.30],[48.70,55.50]],
+  vladivostok:[[131.40,42.90],[131.40,43.40],[131.80,43.60],[132.30,43.50],[132.60,43.20],[132.40,42.80],[131.90,42.60],[131.40,42.90]],
+  mexicocity: [[-99.50,19.00],[-99.55,19.40],[-99.20,19.75],[-98.80,19.70],[-98.60,19.35],[-98.80,19.00],[-99.20,18.80],[-99.50,19.00]],
+  guadalajara:[[-103.80,20.30],[-103.85,20.70],[-103.50,21.00],[-103.10,20.90],[-102.90,20.55],[-103.10,20.20],[-103.50,20.05],[-103.80,20.30]],
+  monterrey:  [[-100.80,25.30],[-100.85,25.80],[-100.40,26.10],[-100.00,25.95],[-99.80,25.55],[-100.00,25.20],[-100.50,25.05],[-100.80,25.30]],
+  tijuana:    [[-117.40,32.20],[-117.40,32.60],[-117.10,32.80],[-116.80,32.70],[-116.60,32.40],[-116.80,32.10],[-117.10,32.00],[-117.40,32.20]],
+  bogota:     [[-74.40,4.40],[-74.45,4.80],[-74.10,5.10],[-73.80,5.00],[-73.60,4.65],[-73.80,4.30],[-74.10,4.15],[-74.40,4.40]],
+  cali:       [[-76.80,3.15],[-76.85,3.60],[-76.50,3.90],[-76.10,3.75],[-75.90,3.40],[-76.10,3.05],[-76.50,2.90],[-76.80,3.15]],
+  cartagena:  [[-75.80,10.10],[-75.85,10.50],[-75.50,10.70],[-75.20,10.60],[-75.00,10.30],[-75.20,9.95],[-75.55,9.80],[-75.80,10.10]],
+  tokyo:      [[139.30,35.40],[139.30,35.80],[139.70,36.10],[140.20,36.00],[140.50,35.70],[140.30,35.30],[139.80,35.10],[139.30,35.40]],
+  osaka:      [[135.00,34.20],[135.00,34.65],[135.40,34.90],[135.80,34.80],[136.10,34.50],[135.90,34.10],[135.50,33.90],[135.00,34.20]],
+  kyoto:      [[135.40,34.80],[135.40,35.20],[135.80,35.45],[136.20,35.35],[136.40,35.05],[136.20,34.70],[135.80,34.55],[135.40,34.80]],
+  yokohama:   [[139.40,35.20],[139.40,35.55],[139.70,35.75],[140.00,35.65],[140.20,35.40],[140.00,35.10],[139.70,34.95],[139.40,35.20]],
+  sanghay:    [[121.00,30.90],[121.00,31.40],[121.50,31.70],[122.00,31.60],[122.30,31.25],[122.00,30.90],[121.50,30.70],[121.00,30.90]],
+  pekin:      [[115.80,39.40],[115.80,40.20],[116.50,40.50],[117.20,40.40],[117.60,39.90],[117.30,39.40],[116.50,39.10],[115.80,39.40]],
+  shenzhen:   [[113.70,22.30],[113.70,22.80],[114.20,23.10],[114.70,22.95],[114.95,22.60],[114.70,22.20],[114.20,22.00],[113.70,22.30]],
+  hongkong:   [[113.80,22.10],[113.80,22.55],[114.20,22.75],[114.60,22.65],[114.80,22.35],[114.60,22.00],[114.20,21.85],[113.80,22.10]],
+  berlin:     [[13.00,52.30],[13.00,52.70],[13.40,52.90],[13.80,52.80],[14.00,52.50],[13.80,52.20],[13.40,52.05],[13.00,52.30]],
+  hamburg:    [[9.70,53.30],[9.70,53.75],[10.20,53.95],[10.70,53.85],[10.90,53.50],[10.65,53.10],[10.20,52.90],[9.70,53.30]],
+  munich:     [[11.20,47.90],[11.20,48.35],[11.70,48.55],[12.20,48.45],[12.40,48.10],[12.20,47.70],[11.70,47.50],[11.20,47.90]],
+  frankfurt:  [[8.30,49.90],[8.30,50.30],[8.80,50.55],[9.30,50.45],[9.50,50.10],[9.30,49.70],[8.80,49.55],[8.30,49.90]],
+  saopaulo:   [[-47.00,-24.00],[-47.00,-23.30],[-46.30,-22.80],[-45.70,-22.90],[-45.40,-23.40],[-45.70,-23.95],[-46.50,-24.20],[-47.00,-24.00]],
+  rio:        [[-43.80,-23.10],[-43.80,-22.60],[-43.10,-22.25],[-42.70,-22.40],[-42.50,-22.85],[-42.80,-23.20],[-43.40,-23.35],[-43.80,-23.10]],
+  salvador:   [[-38.80,-13.10],[-38.85,-12.70],[-38.40,-12.40],[-38.00,-12.55],[-37.80,-12.95],[-38.00,-13.30],[-38.50,-13.45],[-38.80,-13.10]],
+  fortaleza:  [[-38.80,-3.95],[-38.85,-3.55],[-38.40,-3.25],[-38.00,-3.40],[-37.80,-3.80],[-38.00,-4.15],[-38.50,-4.30],[-38.80,-3.95]],
+};
+
+function renderSehirSvg(cityData) {
+  var svgEl = document.getElementById('sehir-svg');
+  if (!svgEl) return;
+  var W = svgEl.parentElement.offsetWidth || window.innerWidth;
+  var H = svgEl.parentElement.offsetHeight || 400;
+  svgEl.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+  svgEl.setAttribute('width', W);
+  svgEl.setAttribute('height', H);
+
+  var svg = d3.select('#sehir-svg');
+  svg.selectAll('*').remove();
+
+  // Koyu zemin
+  svg.append('rect').attr('width',W).attr('height',H).attr('fill','#0e1a0a').style('pointer-events','none');
+
+  // Radial gradients
+  var defs = svg.append('defs');
+  var rg1 = defs.append('radialGradient').attr('id','rg1').attr('cx','35%').attr('cy','60%').attr('r','55%');
+  rg1.append('stop').attr('offset','0%').attr('stop-color','#1a2e10').attr('stop-opacity',1);
+  rg1.append('stop').attr('offset','100%').attr('stop-color','#0e1a0a').attr('stop-opacity',0);
+  var rg2 = defs.append('radialGradient').attr('id','rg2').attr('cx','70%').attr('cy','35%').attr('r','45%');
+  rg2.append('stop').attr('offset','0%').attr('stop-color','#162610').attr('stop-opacity',1);
+  rg2.append('stop').attr('offset','100%').attr('stop-color','#0e1a0a').attr('stop-opacity',0);
+  svg.append('rect').attr('width',W).attr('height',H).attr('fill','url(#rg1)').style('pointer-events','none');
+  svg.append('rect').attr('width',W).attr('height',H).attr('fill','url(#rg2)').style('pointer-events','none');
+
+  // Scan lines
+  var scanG = svg.append('g').attr('opacity',0.025).style('pointer-events','none');
+  for (var sy=0; sy<H; sy+=3) {
+    scanG.append('line').attr('x1',0).attr('y1',sy).attr('x2',W).attr('y2',sy)
+      .attr('stroke','#ffffff').attr('stroke-width',0.8);
+  }
+
+  var coords = SEHIR_COORDS[cityData.id] || SEHIR_COORDS.istanbul;
+  var feature = { type:'Feature', geometry:{ type:'Polygon', coordinates:[coords] }, properties:{} };
+  var pad = 10;
+  var proj = d3.geoMercator().fitExtent([[pad,pad],[W-pad,H-pad]], feature);
+  var pathFn = d3.geoPath().projection(proj);
+  var bounds2 = pathFn.bounds(feature);
+  var px0=bounds2[0][0], py0=bounds2[0][1], px1=bounds2[1][0], py1=bounds2[1][1];
+
+  // Yollar
+  var roadG = svg.append('g').style('pointer-events','none');
+  var rsx=(px1-px0)/5, rsy=(py1-py0)/5;
+  for (var rx=px0; rx<=px1; rx+=rsx) {
+    roadG.append('line').attr('x1',rx).attr('y1',py0-10).attr('x2',rx).attr('y2',py1+10)
+      .attr('stroke','#1e3015').attr('stroke-width',5).attr('opacity',0.9);
+    roadG.append('line').attr('x1',rx).attr('y1',py0-10).attr('x2',rx).attr('y2',py1+10)
+      .attr('stroke','#16260f').attr('stroke-width',2).attr('opacity',1);
+  }
+  for (var ry=py0; ry<=py1; ry+=rsy) {
+    roadG.append('line').attr('x1',px0-10).attr('y1',ry).attr('x2',px1+10).attr('y2',ry)
+      .attr('stroke','#1e3015').attr('stroke-width',4).attr('opacity',0.9);
+    roadG.append('line').attr('x1',px0-10).attr('y1',ry).attr('x2',px1+10).attr('y2',ry)
+      .attr('stroke','#16260f').attr('stroke-width',1.5).attr('opacity',1);
+  }
+
+  // Bina blokları (arka plan doku)
+  var blockG = svg.append('g').style('pointer-events','none');
+  var bcolW=(px1-px0)/5, bcolH=(py1-py0)/5;
+  for (var bc=0; bc<5; bc++) {
+    for (var br=0; br<5; br++) {
+      blockG.append('rect')
+        .attr('x', px0+bc*bcolW+bcolW*0.12).attr('y', py0+br*bcolH+bcolH*0.12)
+        .attr('width', bcolW*0.72).attr('height', bcolH*0.72)
+        .attr('fill','#1a2e12').attr('opacity',0.75).attr('rx',1);
+    }
+  }
+
+  // Şehir poligonu dolgu + çerçeve
+  svg.append('path').datum(feature).attr('d',pathFn)
+    .attr('fill','#1e3015').attr('fill-opacity',0.35).style('pointer-events','none');
+  svg.append('path').datum(feature).attr('d',pathFn)
+    .attr('fill','none').attr('stroke','#4a9030').attr('stroke-width',2)
+    .attr('stroke-dasharray','8,5').attr('opacity',0.85).style('pointer-events','none');
+  svg.append('path').datum(feature).attr('d',pathFn)
+    .attr('fill','none').attr('stroke','#80ff40').attr('stroke-width',0.5)
+    .attr('opacity',0.2).style('pointer-events','none');
+
+  // Bina yerleştirme
+  var binalar = SEHIR_BINALAR;
+  var bW=px1-px0, bH=py1-py0;
+  var projCoords = coords.map(function(c){ return proj(c); });
+
+  function pointInPolygon(qx, qy, poly) {
+    var inside = false;
+    for (var ii=0, jj=poly.length-1; ii<poly.length; jj=ii++) {
+      var xi=poly[ii][0], yi=poly[ii][1], xj=poly[jj][0], yj=poly[jj][1];
+      if (((yi>qy)!==(yj>qy)) && (qx<(xj-xi)*(qy-yi)/(yj-yi)+xi)) inside=!inside;
+    }
+    return inside;
+  }
+
+  function distToBorder(qx, qy, poly) {
+    var minD = Infinity;
+    for (var ii=0, jj=poly.length-1; ii<poly.length; jj=ii++) {
+      var ax=poly[ii][0], ay=poly[ii][1], bxe=poly[jj][0], bye=poly[jj][1];
+      var dx=bxe-ax, dy=bye-ay;
+      var t=((qx-ax)*dx+(qy-ay)*dy)/(dx*dx+dy*dy+0.0001);
+      t=Math.max(0,Math.min(1,t));
+      var d=Math.sqrt((qx-ax-t*dx)*(qx-ax-t*dx)+(qy-ay-t*dy)*(qy-ay-t*dy));
+      if (d<minD) minD=d;
+    }
+    return minD;
+  }
+
+  function shuffle(arr) {
+    for (var i=arr.length-1;i>0;i--){
+      var j=Math.floor(Math.random()*(i+1));
+      var tmp=arr[i]; arr[i]=arr[j]; arr[j]=tmp;
+    }
+    return arr;
+  }
+
+  var MIN_DIST=80, BORDER_MAX=55, N_SAMPLES=800;
+  var allCandidates=[], tries=0;
+  while (allCandidates.length < N_SAMPLES && tries < N_SAMPLES*15) {
+    tries++;
+    var rx2=px0+Math.random()*bW, ry2=py0+Math.random()*bH;
+    if (!pointInPolygon(rx2,ry2,projCoords)) continue;
+    var rd=distToBorder(rx2,ry2,projCoords);
+    if (rd<14) continue;
+    allCandidates.push({pos:[rx2,ry2], edgeDist:rd});
+  }
+
+  var borderCandidates = allCandidates.filter(function(c){return c.edgeDist<=BORDER_MAX;}).sort(function(a,b){return a.edgeDist-b.edgeDist;});
+  var innerCandidates  = shuffle(allCandidates.filter(function(c){return c.edgeDist>BORDER_MAX;}));
+  var placed = [];
+
+  function minDistToPlaced(pos) {
+    if (!placed.length) return Infinity;
+    var min=Infinity;
+    for (var p=0;p<placed.length;p++){
+      var dx=pos[0]-placed[p][0], dy=pos[1]-placed[p][1];
+      var d=dx*dx+dy*dy; if(d<min) min=d;
+    }
+    return Math.sqrt(min);
+  }
+
+  function pickFarthest(pool) {
+    if (!pool.length) return null;
+    if (!placed.length) {
+      var cx=px0+bW*0.5, cy=py0+bH*0.5, bi=0, bd=Infinity;
+      for (var i=0;i<pool.length;i++){var dx=pool[i].pos[0]-cx,dy=pool[i].pos[1]-cy,d=dx*dx+dy*dy;if(d<bd){bd=d;bi=i;}}
+      return pool.splice(bi,1)[0].pos;
+    }
+    var fi=0, fd=-1;
+    for (var i=0;i<pool.length;i++){var d=minDistToPlaced(pool[i].pos);if(d>fd){fd=d;fi=i;}}
+    if (fd < MIN_DIST*0.6) return null;
+    return pool.splice(fi,1)[0].pos;
+  }
+
+  function nextPos(nearBorder) {
+    var pos = nearBorder ? (pickFarthest(borderCandidates)||pickFarthest(innerCandidates))
+                         : (pickFarthest(innerCandidates)||pickFarthest(borderCandidates));
+    if (!pos) {
+      var angle = placed.length*(2*Math.PI/Math.max(8,binalar.length));
+      pos=[px0+bW*0.5+Math.cos(angle)*MIN_DIST*1.1, py0+bH*0.5+Math.sin(angle)*MIN_DIST*1.1];
+    }
+    return pos;
+  }
+
+  var svgWrapper = svgEl.parentElement;
+  svgWrapper.querySelectorAll('.bina-pin-div').forEach(function(el){ el.parentNode.removeChild(el); });
+
+  binalar.forEach(function(b) {
+    var nearBorder = (b.id==='liman'||b.id==='havalimani');
+    var pos = nextPos(nearBorder);
+    placed.push(pos);
+
+    var div = document.createElement('div');
+    div.className = 'bina-pin-div';
+    div.style.cssText = 'position:absolute;display:flex;flex-direction:column;align-items:center;cursor:pointer;transform:translate(-50%,-50%);z-index:50;-webkit-tap-highlight-color:transparent;left:'+pos[0]+'px;top:'+pos[1]+'px;';
+
+    var img = document.createElement('img');
+    img.src = b.png || '';
+    img.style.cssText = 'width:60px;height:60px;object-fit:contain;display:block;';
+    img.onerror = function(){ this.outerHTML='<span style="font-size:44px;line-height:1;">'+b.ico+'</span>'; };
+
+    var lbl = document.createElement('div');
+    lbl.textContent = b.name.length>8 ? b.name.slice(0,7)+'…' : b.name;
+    lbl.style.cssText = "font-family:'CorleoneDue',sans-serif;font-size:10px;color:#c0f0a0;letter-spacing:0.5px;white-space:nowrap;text-shadow:0 0 5px #000,0 0 5px #000,0 0 5px #000;margin-top:-1px;line-height:1;text-align:center;";
+
+    div.appendChild(img);
+    div.appendChild(lbl);
+    (function(bina, city){
+      div.addEventListener('click', function(e){ e.stopPropagation(); showBinaPopupSimple(bina, city); });
+      div.addEventListener('touchend', function(e){ e.preventDefault(); e.stopPropagation(); showBinaPopupSimple(bina, city); });
+    })(b, cityData);
+
+    svgWrapper.appendChild(div);
+  });
+}
+
+function closeUlkeHarita() {
+  goK(2);
+}
+
+function showBinaPopupSimple(b, cityData) {
+  // v5 bpop sistemini kullan
+  var imgEl = document.getElementById('bpop-img');
+  var nameEl = document.getElementById('bpop-name');
+  var tipEl  = document.getElementById('bpop-tip');
+  if (imgEl)  { imgEl.src = b.png || ''; imgEl.onerror = function(){ this.style.display='none'; }; }
+  if (nameEl) nameEl.textContent = b.name;
+  if (tipEl)  tipEl.textContent  = cityData ? cityData.name : '';
+  document.getElementById('bov').classList.add('on');
+  document.getElementById('bpop').classList.add('on');
+}
+
+
+function bAc(b){
+  document.getElementById('bpop-img').src=BASE+b.png;
+  document.getElementById('bpop-name').textContent=b.isim;
+  document.getElementById('bpop-tip').textContent=b.tip;
+  document.getElementById('bov').classList.add('on');
+  document.getElementById('bpop').classList.add('on');
+}
+function bKapat(){
+  document.getElementById('bov').classList.remove('on');
+  document.getElementById('bpop').classList.remove('on');
+}
+
+/* ════ INIT ════ */
+(function(){
+  bar('s-can',72,'can'); bar('s-def',45,'def');
+  bar('s-xp', 62,'xp'); bar('s-ks', 26,'ks');
+  // K1'i göster
+  document.getElementById('k1').style.display='flex';
+})();
+</script>
+</body>
+</html>
