@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@400;600;700&family=Special+Elite&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+<style>
+:root { --popup-top:142px; --popup-w:320px; --popup-h:520px; }
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{background:#111;display:flex;align-items:center;justify-content:center;min-height:100vh;}
+@font-face{font-family:'CorleoneDue';src:url('https://raw.githubusercontent.com/mericaltinors1983-max/hustler/main/CorleoneDue-Wp8v.ttf') format('truetype');}
+#open-btn{background:#C9A84C;border:none;color:#111;font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:3px;padding:16px 40px;cursor:pointer;border-radius:2px;}
+</style>
+<style>
+/* ══ BUSTOUT POPUP ══ */
+#bu-ov { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.65); z-index:10000; }
+#bu-mx { display:none; position:fixed; top:var(--popup-top); left:50%; transform:translateX(-50%); width:var(--popup-w); height:var(--popup-h); z-index:10002; pointer-events:none; border:1.5px solid #C9A84C; border-bottom:none; overflow:hidden; background:#1a1a1a; }
+/* skeleton shimmer */
+#bu-sk-wrap { position:absolute; inset:0; display:flex; flex-direction:column; gap:12px; padding:16px; }
+.bu-sk-bar { border-radius:3px; background:linear-gradient(90deg,#2a2a2a 25%,#3a3a3a 50%,#2a2a2a 75%); background-size:200% 100%; animation:buSkShim 1.1s infinite; }
+@keyframes buSkShim { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+#bu-pop { display:none; position:fixed; top:var(--popup-top); left:50%; transform:translateX(-50%); width:var(--popup-w); height:var(--popup-h); background:transparent; border:none; flex-direction:column; overflow:hidden; z-index:10001; opacity:0; }
+#bu-pop.open { display:flex; flex-direction:column; transform:translateX(-50%); }
+#bu-pop.show { animation:buPopIn .3s ease forwards; }
+@keyframes buPopIn { from{opacity:0;transform:translateX(-50%) scale(.94)} to{opacity:1;transform:translateX(-50%) scale(1)} }
+/* header */
+/* screens */
+#bu-screens { flex:1; position:relative; overflow:hidden; min-height:0; }
+.bu-sc { display:none; position:absolute; inset:0; background:transparent; flex-direction:column; }
+.bu-sc.on { display:flex; }
+/* ── SC-LIST: mahkum listesi ── */
+#bu-plist { flex:1; overflow-y:auto; padding:4px 0; }
+.bu-prow { display:flex; align-items:center; padding:10px 12px; margin:4px 8px; border-radius:4px; cursor:pointer; position:relative; overflow:hidden; gap:10px; background:rgba(0,0,0,0.72); }
+.bu-self-row { display:flex; align-items:center; padding:10px 12px; margin:4px 8px; border-radius:4px; cursor:pointer; position:relative; gap:10px; background:rgba(0,0,0,0.72); border:1.5px solid rgba(201,168,76,0.7); }
+.bu-prow.busy { opacity:.4; pointer-events:none; }
+.bu-fbar { width:3px; height:100%; position:absolute; left:0; top:0; }
+.bu-pico { font-size:22px; flex-shrink:0; }
+.bu-pinfo { flex:1; }
+.bu-pnick { font-family:'Bebas Neue',sans-serif; font-size:14px; color:#fff; letter-spacing:1px; }
+.bu-pmeta { font-family:'Special Elite',serif; font-size:9px; color:rgba(255,255,255,0.6); margin-top:1px; }
+.bu-ptmr  { font-family:'Bebas Neue',sans-serif; font-size:16px; color:#fff; letter-spacing:1px; text-align:right; flex-shrink:0; }
+.bu-ptmr.red { color:#ff6b6b; }
+#bu-empty { display:none; flex-direction:column; align-items:center; justify-content:center; flex:1; gap:8px; padding:20px; text-align:center; }
+.bu-emico img { width:48px; height:48px; object-fit:contain; }
+.bu-emtxt { font-family:'Bebas Neue',sans-serif; font-size:16px; color:#fff; letter-spacing:2px; text-shadow:0 1px 4px rgba(0,0,0,0.8); }
+.bu-emsub { font-family:'Special Elite',serif; font-size:10px; color:rgba(255,255,255,0.6); font-style:italic; }
+#bu-bst-res { display:none; position:absolute; inset:0; z-index:50; flex-direction:column; align-items:center; justify-content:center; gap:12px; }
+#bu-bst-res.win  { background:transparent; }
+#bu-bst-res.fail { background:transparent; }
+#bu-bst-res img  { width:90px; height:90px; object-fit:contain; }
+.bu-rtxt { font-family:'Bebas Neue',sans-serif; font-size:18px; color:#111; letter-spacing:2px; text-align:center; padding:0 16px; text-shadow:0 1px 4px rgba(255,255,255,0.6); }
+/* ── SC-JAIL: kendi hapis ekranın ── */
+.bu-jtop  { width:100%; padding:14px 16px 10px; text-align:center; flex-shrink:0; }
+.bu-jey   { font-family:'Special Elite',serif; font-size:9px; color:rgba(255,255,255,0.6); letter-spacing:3px; text-transform:uppercase; margin-bottom:4px; }
+.bu-jhl   { font-family:'Playfair Display',serif; font-size:18px; font-weight:700; color:#ff6b6b; text-shadow:0 0 12px rgba(255,0,0,0.5); }
+.bu-jtmr  { font-family:'Bebas Neue',sans-serif; font-size:52px; color:#fff; letter-spacing:2px; line-height:1; margin:10px 0 4px; text-shadow:0 2px 8px rgba(0,0,0,0.8); }
+.bu-jfl   { font-family:'Special Elite',serif; font-size:10px; color:rgba(255,255,255,0.55); font-style:italic; }
+.bu-jact  { width:100%; padding:0 16px 12px; display:flex; flex-direction:column; gap:8px; flex-shrink:0; }
+.bu-jbail { width:100%; padding:11px; background:rgba(255,255,255,0.15); border:1.5px solid rgba(255,255,255,0.5); color:#fff; font-family:'Bebas Neue',sans-serif; font-size:13px; letter-spacing:2px; cursor:pointer; border-radius:3px; }
+
+.bu-jbo   { width:100%; padding:11px; background:rgba(201,168,76,0.9); border:none; color:#111; font-family:'Bebas Neue',sans-serif; font-size:14px; font-weight:700; letter-spacing:2px; cursor:pointer; display:flex; align-items:center; justify-content:space-between; border-radius:3px; }
+.bu-jbo:disabled { background:rgba(150,150,150,0.5); cursor:not-allowed; color:rgba(255,255,255,0.5); }
+.bu-bometa { font-size:10px; letter-spacing:1px; opacity:.8; }
+.bu-hdots { display:flex; gap:6px; justify-content:center; margin-top:6px; }
+.bu-hdot  { width:10px; height:10px; border-radius:50%; background:#fff; transition:background .2s; }
+.bu-hdot.used { background:rgba(255,255,255,0.25); }
+.bu-jwt   { padding:8px 16px; flex-shrink:0; }
+.bu-jwtxt { font-family:'Special Elite',serif; font-size:10px; color:rgba(255,255,255,0.45); font-style:italic; text-align:center; }
+.bu-rsub  { font-family:'Special Elite',serif; font-size:11px; color:#555; font-style:italic; text-align:center; padding:0 20px; }
+/* close bar + toast */
+#bu-toast { position:absolute; bottom:10px; left:50%; transform:translateX(-50%); background:#111; color:#fff; font-family:'Bebas Neue',sans-serif; font-size:11px; letter-spacing:1px; padding:7px 14px; white-space:nowrap; opacity:0; transition:opacity .2s; pointer-events:none; z-index:200; }
+#bu-toast.green { background:#2e7d32; }
+#bu-toast.red   { background:#c62828; }
+#bu-toast.show  { opacity:1; }
+.bu-fl { position:fixed; font-family:'Bebas Neue',sans-serif; font-size:21px; pointer-events:none; z-index:99999; animation:buFlUp 1.6s ease-out forwards; }
+@keyframes buFlUp { 0%{opacity:1;transform:translateY(0)} 15%{opacity:1;transform:translateY(-16px) scale(1.1)} 100%{opacity:0;transform:translateY(-90px) scale(.85)} }
+/* ══ /BUSTOUT CSS ══ */
+
+</style>
+<title>BUSTOUT</title>
+</head>
+<body>
+<button id="open-btn" onclick="bu_open()">BUSTOUT AÇ</button>
+
+<!-- ══ BUSTOUT POPUP ══ -->
+<!-- KURAL: Header YOK | close_icon.png YOK | Kapatma SADECE alt btn_close_bar.png -->
+<div id="bu-ov" style="cursor:pointer;touch-action:manipulation;" onclick="bu_close()"></div>
+<div id="bu-mx">
+  <div id="bu-sk-wrap">
+    <!-- header placeholder -->
+    <div class="bu-sk-bar" style="height:60px;width:100%;border-radius:4px;"></div>
+    <!-- list rows -->
+    <div class="bu-sk-bar" style="height:52px;width:100%;animation-delay:.05s"></div>
+    <div class="bu-sk-bar" style="height:52px;width:90%;animation-delay:.10s"></div>
+    <div class="bu-sk-bar" style="height:52px;width:95%;animation-delay:.15s"></div>
+    <div class="bu-sk-bar" style="height:52px;width:88%;animation-delay:.20s"></div>
+    <div class="bu-sk-bar" style="height:52px;width:92%;animation-delay:.25s"></div>
+    <div class="bu-sk-bar" style="height:52px;width:96%;animation-delay:.30s"></div>
+    <!-- close bar placeholder -->
+    <div style="flex:1;"></div>
+    <div class="bu-sk-bar" style="height:44px;width:100%;animation-delay:.35s"></div>
+  </div>
+</div>
+<div id="bu-pop" onclick="event.stopPropagation()">
+
+  <div id="bu-screens">
+
+    <!-- SC-LIST: PNG üstte + hapisteyken kendi bölümü + mahkumlar altta -->
+    <div class="bu-sc on" id="bu-sc-list" style="flex-direction:column;">
+
+      <!-- HAPISTE DEĞİLSE: PNG + BUST OUT başlık -->
+      <div id="bu-list-header-normal" style="position:absolute;top:0;left:0;right:0;display:flex;flex-direction:column;align-items:center;padding-top:8px;pointer-events:none;">
+        <img id="bu-main-png"
+             src="https://mericaltinors1983-max.github.io/LaFamilia/prisoner.png"
+             style="width:150px;height:150px;object-fit:contain;"
+             onerror="this.outerHTML='<span style=font-size:90px>⛓️</span>'">
+        <div style="font-family:'CorleoneDue',sans-serif;font-size:16px;color:rgba(255,255,255,0.85);letter-spacing:3px;margin-top:8px;text-shadow:0 1px 6px rgba(0,0,0,0.8);">BUST OUT</div>
+      </div>
+
+      <!-- HAPİSTEYSE: YAKALANDIN + timer (butonlar listede) -->
+      <div id="bu-self-jail-panel" style="display:none;position:absolute;top:0;left:0;right:0;background:transparent;padding:0 16px 8px;flex-direction:column;align-items:center;">
+        <img src="https://mericaltinors1983-max.github.io/LaFamilia/prisoner.png"
+             style="width:110px;height:110px;object-fit:contain;flex-shrink:0;margin-top:14px;"
+             onerror="this.outerHTML='<span style=font-size:80px>⛓️</span>'">
+        <div class="bu-jey" id="bu-j-city" style="font-size:10px;letter-spacing:2px;color:rgba(255,255,255,0.55);text-align:center;margin-top:4px;">İSTANBUL — OPERATOR</div>
+        <div class="bu-jhl" style="font-size:20px;text-align:center;">YAKALANDIN</div>
+        <div class="bu-jtmr" id="bu-j-tmr" style="font-size:46px;line-height:1;">0:30</div>
+        <div class="bu-jfl" id="bu-j-fl" style="font-size:10px;color:rgba(255,255,255,0.45);font-style:italic;text-align:center;margin-top:2px;">"Suç sırasında yakalandın."</div>
+        <div id="bu-j-uzadi" style="font-family:'Bebas Neue',sans-serif;font-size:13px;color:#c62828;letter-spacing:2px;opacity:0;transition:opacity 0.3s;text-align:center;min-height:14px;margin-top:2px;"></div>
+        <!-- Gizli elementler — hak/pct hesabı için tutulur -->
+        <span id="bu-j-bail" style="display:none">1500</span>
+        <span id="bu-bo-pct" style="display:none">20%</span>
+        <span id="bu-bo-hak" style="display:none">3</span>
+        <div id="bu-hd0" style="display:none"></div>
+        <div id="bu-hd1" style="display:none"></div>
+        <div id="bu-hd2" style="display:none"></div>
+        <button id="bu-j-bo" style="display:none" onclick="bu_doBustOut()"></button>
+      </div>
+
+      <!-- MAHKUM LİSTESİ -->
+      <div id="bu-list-scroll" style="position:absolute;top:158px;bottom:0;left:0;right:0;overflow-y:auto;">
+        <div id="bu-plist"></div>
+        <div id="bu-empty">
+          <div class="bu-emico">
+            <img src="https://mericaltinors1983-max.github.io/LaFamilia/building_hapishane.png"
+                 onerror="this.style.display='none'">
+          </div>
+          <div class="bu-emtxt">HABİSANE BOŞ</div>
+          <div class="bu-emsub">"Nobody left to save."</div>
+        </div>
+      </div>
+
+      <!-- Sonuç overlay (başkasını kurtarma) -->
+      <div id="bu-bst-res">
+        <img id="bu-bst-img" src="" onerror="this.style.display='none'">
+        <div class="bu-rtxt" id="bu-bst-txt"></div>
+      </div>
+    </div>
+
+  <!-- ── CLOSE ── -->
+  <div style="position:absolute;bottom:36px;left:0;right:0;display:flex;justify-content:center;z-index:5;cursor:pointer;" onclick="bu_close()">
+    <img src="https://mericaltinors1983-max.github.io/LaFamilia/btn_close_bar.png"
+         style="height:44px;object-fit:contain;"
+         onerror="this.outerHTML='<span style=font-family:Oswald,sans-serif;font-size:11px;font-weight:700;color:#fff;letter-spacing:2px>KAPAT</span>'">
+  </div>
+  <div id="bu-toast"></div>
+</div>
+<!-- ══ /BUSTOUT POPUP ══ -->
+
+<script>
+
+var BASE_URL = 'https://mericaltinors1983-max.github.io/LaFamilia/';
+var PLAYER = {city:'istanbul',rank:5,ks:10,defence:5000};
+var BASE_KS = 10;
+var JAIL_STATE = {active:false};
+function isPlayerInJail(){return JAIL_STATE.active;}
+function showToast(m){
+  var t=document.createElement('div');
+  t.style.cssText='position:fixed;bottom:120px;left:50%;transform:translateX(-50%);background:#111;color:#fff;font-family:Bebas Neue,sans-serif;font-size:13px;letter-spacing:1px;padding:8px 16px;z-index:99999;border-radius:2px;';
+  t.textContent=m; document.body.appendChild(t);
+  setTimeout(function(){if(t.parentNode)t.parentNode.removeChild(t);},2500);
+}
+function spawnFloat(type,text){
+  var colors={xp:'#f97316',para:'#22c55e',ks:'#ef4444',defence:'#111',suurus:'#3b82f6'};
+  var el=document.createElement('div');
+  el.style.cssText='position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);font-family:Bebas Neue,sans-serif;font-size:26px;color:'+(colors[type]||'#C9A84C')+';pointer-events:none;z-index:99999;animation:_fl 1.6s ease-out forwards;';
+  el.textContent=text; document.body.appendChild(el);
+  setTimeout(function(){if(el.parentNode)el.parentNode.removeChild(el);},1600);
+}
+var _flSt=document.createElement('style');
+_flSt.textContent='@keyframes _fl{0%{opacity:1;transform:translate(-50%,-50%)}100%{opacity:0;transform:translate(-50%,-200%)}}';
+document.head.appendChild(_flSt);
+function bu_setJail(t,src,city){JAIL_STATE={active:true,t:t};showToast('HABİS: '+t+'sn');}
+function bu_open(c){}
+
+/* ══ BUSTOUT ══ */
+var BU_TI = null, BU_JI = null;
+var BU_JT = 30;
+var BU_HAK = 3;
+var BU_OK = 47;          // PLAYER.bustoutOk — toplam başarılı bustout
+var BU_MX_RAF = null;
+var BU_MX_CHARS = '0123456789ABCDEF⛓🔒'.split('');
+var BU_ACTIVE_CITY = 'istanbul';  // şu an görüntülenen şehir
+var BU_NEXT_ID = 900;             // unique prisoner id counter
+
+// ── Şehir bazlı mahkum listeleri (backend gelene kadar mock) ──
+var BU_CITY_PRISONERS = {
+  istanbul:   [
+    {id:1, nick:'GHOST_47',  rank:8,  fam:'CORLEONES', fc:'#f97316', t:83,  crime:'Armed Rob'},
+    {id:2, nick:'DEAD_EYE',  rank:6,  fam:'CORLEONES', fc:'#f97316', t:45,  crime:'Offender'},
+    {id:3, nick:'IRON_FIST', rank:4,  fam:null,        fc:null,      t:152, crime:'Inside Job'},
+  ],
+  izmir:      [
+    {id:4, nick:'SHADOW_X',  rank:11, fam:'VIPERS',    fc:'#a78bfa', t:210, crime:'Felony'},
+  ],
+  napoli:     [
+    {id:5, nick:'TNT_MIKE',  rank:9,  fam:null,        fc:null,      t:320, crime:'Felony'},
+    {id:6, nick:'WHEELS_22', rank:7,  fam:'COSA NOSTRA',fc:'#3b82f6',t:67,  crime:'Wheelman'},
+  ],
+  newyork:    [
+    {id:7, nick:'BIG_EASY',  rank:5,  fam:'FIVE FAM',  fc:'#22c55e', t:44,  crime:'Offender'},
+  ],
+  moskova:    [
+    {id:8, nick:'IRON_BEAR', rank:10, fam:'RED SYNDICATE',fc:'#ef4444',t:180,crime:'Armed Rob'},
+  ],
+};
+
+// Global jail state — suçlar buraya yazar
+var JAIL_STATE = { active:false, time:30, suc:'', city:'' };
+
+/* ── HAPİS KONTROLÜ — tüm suç açılışlarında kullan ── */
+function isPlayerInJail() {
+  return JAIL_STATE.active === true;
+}
+
+// ── Formül ──
+function bu_calcBust(n){
+  return Math.min(90, 15+Math.floor(n/10));
+}
+// NOT: Kendini bustout etme şansı da bu_calcBust(BU_OK) ile hesaplanır — rank tablosu YOKTUR
+// Formül: min(%90, %15 + floor(başarılıSayısı/10))
+function bu_fmt(s){var m=Math.floor(s/60),x=s%60;return m+':'+(x<10?'0':'')+x;}
+function bu_fnum(n){return String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g,'.');}
+function bu_rnd(a){return a[Math.floor(Math.random()*a.length)];}
+
+function bu_goSc(id){
+  document.querySelectorAll('.bu-sc').forEach(function(s){s.classList.remove('on');});
+  var el=document.getElementById(id);if(el)el.classList.add('on');
+}
+function bu_toast(m,t,d){
+  var el=document.getElementById('bu-toast');if(!el)return;
+  el.textContent=m;el.className=(t||'')+' show';
+  clearTimeout(el._r);el._r=setTimeout(function(){el.className=t||'';},d||2000);
+}
+
+// ── Aktif şehrin mahkum listesini al ──
+function bu_getPrisoners(){
+  return BU_CITY_PRISONERS[BU_ACTIVE_CITY] || [];
+}
+
+// ── Beceri barı ──
+function bu_updateSkill(){} // skill bar kaldırıldı
+
+// ── Mahkum listesi ──
+function bu_renderList(){
+  var pl=document.getElementById('bu-plist');
+  var em=document.getElementById('bu-empty');
+  if(!pl)return;
+  var list=bu_getPrisoners();
+  // Şehir adını header'da göster
+  var cityDisplayName=BU_ACTIVE_CITY.toUpperCase();
+  if(!list.length){
+    pl.style.display='none';em.style.display='flex';return;
+  }
+  pl.style.display='block';em.style.display='none';
+  var sorted=list.slice().sort(function(a,b){
+    if(a.isSelf) return -1; // kendin her zaman en üste
+    if(b.isSelf) return 1;
+    return b.t-a.t;
+  });
+  var html='';
+  for(var i=0;i<sorted.length;i++){
+    var p=sorted[i];
+    var isSelf=(p.isSelf===true);
+    var fb=p.fc?'<div class="bu-fbar" style="background:'+p.fc+'"></div>':'';
+    var ft=p.fam
+      ?'<span style="color:'+(p.fc||'#aaa')+';font-size:9px">'+p.fam+'</span>'
+      :'<span style="color:#ccc;font-size:9px">FREELANCE</span>';
+    var tc=p.t<60?' red':'';
+    var bailAmt = bu_fnum((JAIL_STATE&&JAIL_STATE.time?JAIL_STATE.time:30)*50);
+    var boChance = bu_calcBust ? bu_calcBust(BU_OK) : 20;
+    var boHak = BU_HAK !== undefined ? BU_HAK : 3;
+    var selfBadge=isSelf
+      ?'<div style="display:flex;flex-direction:column;gap:3px;margin-left:auto;align-items:flex-end;">'       +'<span onclick="event.stopPropagation();bu_doBail()" style="font-family:\'Oswald\',sans-serif;font-size:9px;background:rgba(255,255,255,0.15);color:#fff;padding:2px 7px;border-radius:2px;letter-spacing:0.5px;cursor:pointer;">KEFALET $'+bailAmt+'</span>'       +'<span style="font-family:\'Bebas Neue\',sans-serif;font-size:9px;color:#C9A84C;letter-spacing:1px;">'+boChance+'% ŞANS '+boHak+'/3 HAK</span>'       +'</div>'
+      :'';
+    var clickAttr=isSelf?'onclick="bu_doBustOut()" style="cursor:pointer;"':'onclick="bu_doBust('+p.id+')"';
+    var crimeTag=p.crime?'<span style="font-size:9px;color:#aaa;"> · '+p.crime+'</span>':'';
+    var animalUrl='https://mericaltinors1983-max.github.io/LaFamilia/rank_animal_'+p.rank+'.png';
+    var animalPic='<div class="bu-pico"><img src="'+animalUrl+'" style="width:28px;height:28px;object-fit:contain;" onerror="this.style.display=\'none\'"></div>';
+    html+='<div class="bu-prow'+(isSelf?' bu-self-row':'')
+      +'" id="bu-pr-'+p.id+'" '+clickAttr+'>'
+      +fb
+      +animalPic
+      +(isSelf
+        ?('<div class="bu-pinfo" style="flex:1;min-width:0;">'
+         +'<div class="bu-pnick">SEN</div>'
+         +'<div class="bu-pmeta">RANK '+p.rank+' &bull; '+ft+crimeTag+'</div>'
+         +'</div>'+selfBadge)
+        :('<div class="bu-pinfo">'
+         +'<div class="bu-pnick">'+p.nick+'</div>'
+         +'<div class="bu-pmeta">RANK '+p.rank+' &bull; '+ft+crimeTag+'</div>'
+         +'</div>'))
+      +(isSelf?'':'<div class="bu-ptmr'+tc+'" id="bu-tmr-'+p.id+'">'+bu_fmt(p.t)+'</div>')
+      +'</div>';
+  }
+  pl.innerHTML=html;
+}
+
+// ── Başkasını bustout et ──
+function bu_doBust(id){
+  if(crimeGuard())return;
+  var list=bu_getPrisoners();
+  var p=null;
+  for(var i=0;i<list.length;i++){if(list[i].id===id){p=list[i];break;}}
+  if(!p||p.isSelf)return;
+  var row=document.getElementById('bu-pr-'+p.id);
+  if(row)row.classList.add('busy');
+  var win=Math.random()*100<bu_calcBust(BU_OK);
+  var nick=p.nick;
+  setTimeout(function(){
+    if(win){
+      BU_OK++;
+      if(BU_CITY_PRISONERS[BU_ACTIVE_CITY]){
+        BU_CITY_PRISONERS[BU_ACTIVE_CITY]=BU_CITY_PRISONERS[BU_ACTIVE_CITY].filter(function(x){return x.id!==id;});
+      }
+      bu_updateSkill();
+      bu_renderList();
+    } else {
+      if(row)row.classList.remove('busy');
+      // Fail → sadece CEZA UZADI mesajı + hapse düş
+      JAIL_STATE.city=BU_ACTIVE_CITY;
+      bu_goJail(30,'Birini kurtarmaya çalışırken yakalandın.');
+      bu_addSelfToPrison(BU_ACTIVE_CITY, 30);
+      var uzadiEl=document.getElementById('bu-j-uzadi');
+      if(uzadiEl){uzadiEl.textContent='CEZA +0:30 UZADI';uzadiEl.style.opacity='1';setTimeout(function(){uzadiEl.style.opacity='0';},3000);}
+    }
+  },350);
+}
+
+// ── PLAYER'ı şehir listesine ekle ──
+function bu_addSelfToPrison(cityId, sec){
+  if(!BU_CITY_PRISONERS[cityId])BU_CITY_PRISONERS[cityId]=[];
+  // Önceki kaydı temizle
+  BU_CITY_PRISONERS[cityId]=BU_CITY_PRISONERS[cityId].filter(function(p){return !p.isSelf;});
+  BU_NEXT_ID++;
+  BU_CITY_PRISONERS[cityId].unshift({
+    id: BU_NEXT_ID,
+    nick: (PLAYER&&PLAYER.nick)||'SEN',
+    rank: (PLAYER&&PLAYER.rank)||1,
+    fam:  (PLAYER&&PLAYER.familyName)||null,
+    fc:   '#C9A84C',
+    t:    sec,
+    isSelf: true,
+    crime: JAIL_STATE.suc||''
+  });
+}
+
+// ── Hapis paneli göster (bu-sc-list üstünde) ──
+function bu_goJail(sec,flavor){
+  var zatenHapiste = JAIL_STATE.active && BU_JT > 0;
+  if(zatenHapiste){
+    BU_JT = BU_JT + sec;
+    var uzadiEl = document.getElementById('bu-j-uzadi');
+    if(uzadiEl){
+      uzadiEl.textContent = 'CEZA +' + bu_fmt(sec) + ' UZADI';
+      uzadiEl.style.opacity = '1';
+      setTimeout(function(){ uzadiEl.style.opacity = '0'; }, 3000);
+    }
+  } else {
+    BU_JT = sec;
+    BU_HAK = 3;
+  }
+  var cityId=JAIL_STATE.city||BU_ACTIVE_CITY||(PLAYER&&PLAYER.city)||'istanbul';
+  var cityName=cityId.toUpperCase();
+  var rankName=(PLAYER&&PLAYER.rankName)?PLAYER.rankName.toUpperCase():'';
+  var cEl=document.getElementById('bu-j-city');
+  if(cEl)cEl.textContent=cityName+' — '+(rankName||'OPERATOR');
+  var tmEl=document.getElementById('bu-j-tmr');if(tmEl)tmEl.textContent=bu_fmt(BU_JT);
+  var blEl=document.getElementById('bu-j-bail');if(blEl)blEl.textContent=bu_fnum(BU_JT*50);
+  var flEl=document.getElementById('bu-j-fl');
+  if(!zatenHapiste && flEl)flEl.textContent='"'+(flavor||'Yakalandın.')+'"';
+  var boEl=document.getElementById('bu-bo-pct');
+  if(boEl)boEl.textContent=bu_calcBust(BU_OK)+'%';
+  bu_updateHak();
+  smPlaySfx('busted');
+  // Kendi panelini göster, normal header'ı gizle, scroll'u aşağı kaydır
+  var selfPanel = document.getElementById('bu-self-jail-panel');
+  var normalHeader = document.getElementById('bu-list-header-normal');
+  var listScroll = document.getElementById('bu-list-scroll');
+  if(selfPanel){ selfPanel.style.display='flex'; }
+  if(normalHeader){ normalHeader.style.display='none'; }
+  // Liste scroll'u panel altında başlat
+  if(listScroll){
+    listScroll.style.display = 'block';
+    // Panel yüksekliğini hesaplayıp listeyi aşağıda başlat
+    setTimeout(function(){
+      var ph = selfPanel ? selfPanel.offsetHeight : 200;
+      listScroll.style.top = ph + 'px';
+    }, 30);
+  }
+  bu_renderList();
+  bu_startTI();
+  bu_goSc('bu-sc-list');
+  if(!zatenHapiste) bu_startJI();
+  JAIL_STATE.active=true;
+  // Listeyi de render et (kendimiz de görünsün)
+  setTimeout(function(){
+    bu_renderList();
+    bu_startTI();
+    var ls = document.getElementById('bu-list-scroll');
+    var sp = document.getElementById('bu-self-jail-panel');
+    if(ls && sp){ ls.style.top = sp.offsetHeight + 'px'; }
+  }, 60);
+}
+
+function bu_startJI(){
+  clearInterval(BU_JI);
+  BU_JI=setInterval(function(){
+    BU_JT--;
+    var tmEl=document.getElementById('bu-j-tmr');if(tmEl)tmEl.textContent=bu_fmt(BU_JT);
+    var blEl=document.getElementById('bu-j-bail');if(blEl)blEl.textContent=bu_fnum(Math.max(0,BU_JT*50));
+    // Self prisoner timer da azalsın
+    var cityId=JAIL_STATE.city||(PLAYER&&PLAYER.city)||'istanbul';
+    var list=BU_CITY_PRISONERS[cityId];
+    if(list){
+      for(var i=0;i<list.length;i++){
+        if(list[i].isSelf){list[i].t=BU_JT;break;}
+      }
+    }
+    if(BU_JT<=0){clearInterval(BU_JI);bu_jailFree('Süren doldu, serbest kaldın!','green');}
+  },1000);
+}
+
+function bu_updateHak(){
+  for(var i=0;i<3;i++){
+    var d=document.getElementById('bu-hd'+i);
+    if(d)d.className='bu-hdot'+(i>=BU_HAK?' used':'');
+  }
+  var hEl=document.getElementById('bu-bo-hak');if(hEl)hEl.textContent=BU_HAK;
+  var boBtn=document.getElementById('bu-j-bo');if(boBtn)boBtn.disabled=(BU_HAK<=0);
+}
+
+// ── Kendini break out et ──
+function bu_doBustOut(){
+  if(crimeGuard())return;
+  if(BU_HAK<=0)return;
+  var boBtn=document.getElementById('bu-j-bo');if(boBtn)boBtn.disabled=true;
+  var win=Math.random()*100<bu_calcBust(BU_OK);
+  if(win){
+    BU_OK++;
+    bu_removeSelfFromPrison();
+    bu_jailFree('Kaçtın! +100 XP','green');
+    bu_float('+100 XP','#f97316');
+  } else {
+    BU_HAK--;
+    var ex=((PLAYER&&PLAYER.rank||1)<=5?20:(PLAYER&&PLAYER.rank||1)<=10?30:45);
+    BU_JT+=ex;
+    var tmEl=document.getElementById('bu-j-tmr');if(tmEl)tmEl.textContent=bu_fmt(BU_JT);
+    var blEl=document.getElementById('bu-j-bail');if(blEl)blEl.textContent=bu_fnum(BU_JT*50);
+    bu_updateHak();
+    if(BU_HAK>0){var bb=document.getElementById('bu-j-bo');if(bb)bb.disabled=false;}
+    // Ceza uzatma mesajı
+    var uzadiEl=document.getElementById('bu-j-uzadi');
+    if(uzadiEl){uzadiEl.textContent='CEZA +'+bu_fmt(ex)+' UZADI';uzadiEl.style.opacity='1';setTimeout(function(){uzadiEl.style.opacity='0';},3000);}
+  }
+}
+
+function bu_doBail(){
+  if(crimeGuard())return;
+  if(!JAIL_STATE.active)return;
+  bu_removeSelfFromPrison();
+  bu_jailFree('Kefaletle çıktın! −$'+bu_fnum(BU_JT*50),'green');
+}
+
+function bu_removeSelfFromPrison(){
+  var cityId=JAIL_STATE.city||(PLAYER&&PLAYER.city)||'istanbul';
+  if(BU_CITY_PRISONERS[cityId]){
+    BU_CITY_PRISONERS[cityId]=BU_CITY_PRISONERS[cityId].filter(function(p){return !p.isSelf;});
+  }
+}
+
+function bu_jailFree(msg,type){
+  clearInterval(BU_JI);
+  JAIL_STATE.active=false;
+  // Kendi panelini gizle, normal header'ı geri getir
+  var sp=document.getElementById('bu-self-jail-panel');
+  var nh=document.getElementById('bu-list-header-normal');
+  var ls=document.getElementById('bu-list-scroll');
+  if(sp)sp.style.display='none';
+  if(nh)nh.style.display='flex';
+  if(ls){ ls.style.display='block'; ls.style.top='158px'; }
+  bu_renderList();
+  bu_renderList(); // header da güncellenir
+  bu_goSc('bu-sc-list');
+  bu_toast(msg,type,2500);
+}
+
+// ── Popup aç — cityId opsiyonel (hapishane binasından gelince iletilir) ──
+
+// ── Kendini kurtarma girişimi — listeden tıklayınca ──
+function bu_selfEscape() {
+  if(!JAIL_STATE.active) return;
+  var flavor = JAIL_STATE.suc === 'bustout-fail'
+    ? 'Birini kurtarmaya çalışırken yakalandın.'
+    : 'Suç sırasında yakalandın.';
+  bu_goJail(JAIL_STATE.time || 30, flavor);
+}
+
+function bu_open(cityId){
+  clearInterval(BU_TI);clearInterval(BU_JI);
+  BU_ACTIVE_CITY=cityId||(PLAYER&&PLAYER.city)||'istanbul';
+  document.getElementById('bu-ov').style.display='flex';
+  var pop=document.getElementById('bu-pop');
+  var mx=document.getElementById('bu-mx');
+
+  mx.style.display='block';
+  pop.classList.add('open');
+  pop.classList.remove('show');
+  if(JAIL_STATE.active){
+    // Hapisteyse → direkt YAKALANDIN ekranı
+    var flavor = JAIL_STATE.suc === 'bustout-fail'
+      ? 'Birini kurtarmaya çalışırken yakalandın.'
+      : 'Suç sırasında yakalandın.';
+    bu_goJail(JAIL_STATE.time || 30, flavor);
+  } else {
+    // Hapiste değilse → mahkum listesi
+    var sp2=document.getElementById('bu-self-jail-panel');
+    var nh2=document.getElementById('bu-list-header-normal');
+    var ls2=document.getElementById('bu-list-scroll');
+    if(sp2)sp2.style.display='none';
+    if(nh2)nh2.style.display='flex';
+    if(ls2){ls2.style.display='block';ls2.style.top='158px';}
+    bu_goSc('bu-sc-list');
+    bu_updateSkill();
+    bu_renderList();
+    bu_startTI();
+  }
+  bu_runSkeleton(mx,function(){
+    mx.style.display='none';
+    pop.classList.add('show');
+  });
+}
+
+// ── Popup kapat ──
+function bu_close(){
+  clearInterval(BU_TI);clearInterval(BU_JI);
+  document.getElementById('bu-mx').style.display='none';
+  document.getElementById('bu-mx').style.opacity='1';
+  document.getElementById('bu-ov').style.display='none';
+  var pop=document.getElementById('bu-pop');
+  pop.classList.remove('open');
+  pop.classList.remove('show');
+}
+
+// ── setJail: suçlar çağırır → PLAYER şehir listesine eklenir ──
+function bu_setJail(sec,suc,cityName){
+  var cityId=cityName?cityName.toLowerCase().replace(/\s/g,'')
+    :(PLAYER&&PLAYER.city)||'istanbul';
+  JAIL_STATE.active = true;
+  JAIL_STATE.time   = sec  || 30;
+  JAIL_STATE.suc    = suc  || '';
+  JAIL_STATE.city   = cityId;
+  BU_JT  = JAIL_STATE.time;
+  BU_HAK = 3;
+  // PLAYER'ı o şehrin listesine ekle (diğerleri görsün)
+  bu_addSelfToPrison(cityId, sec||30);
+}
+
+// ── Mahkum timer'ı (aktif şehir) ──
+function bu_startTI(){
+  clearInterval(BU_TI);
+  BU_TI=setInterval(function(){
+    var list=bu_getPrisoners();
+    var changed=false;
+    for(var i=0;i<list.length;i++){
+      if(list[i].isSelf)continue; // kendi timerı JI yönetiyor
+      list[i].t--;
+      var el=document.getElementById('bu-tmr-'+list[i].id);
+      if(el){el.textContent=bu_fmt(list[i].t);el.className='bu-ptmr'+(list[i].t<60?' red':'');}
+      if(list[i].t<=0)changed=true;
+    }
+    if(changed){
+      BU_CITY_PRISONERS[BU_ACTIVE_CITY]=(BU_CITY_PRISONERS[BU_ACTIVE_CITY]||[]).filter(function(p){return p.t>0||p.isSelf;});
+      bu_renderList();
+    }
+  },1000);
+}
+
+function bu_showInfo(){}
+
+function bu_float(txt,color){
+  var el=document.createElement('div');
+  el.className='bu-fl';el.textContent=txt;el.style.color=color;
+  el.style.left=(window.innerWidth/2-60)+'px';
+  el.style.top=(window.innerHeight-210)+'px';
+  document.body.appendChild(el);
+  setTimeout(function(){el.remove();},1700);
+}
+
+function bu_runSkeleton(el, cb){
+  el.style.display='block';
+  setTimeout(function(){
+    // fade out skeleton
+    el.style.transition='opacity 0.3s ease';
+    el.style.opacity='0';
+    setTimeout(function(){
+      el.style.display='none';
+      el.style.opacity='1';
+      el.style.transition='';
+      if(cb)cb();
+    },300);
+  },1100);
+}
+
+</script>
+</body>
+</html>
