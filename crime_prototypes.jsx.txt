@@ -1,0 +1,930 @@
+import { useState, useEffect, useRef } from "react";
+
+/* ══════════════════════════════════════════════════════
+   LaFamilia — CRIME PROTOTYPES
+   All Crimes · Offender · Armed Robbery · Inside Job · Felony
+   ══════════════════════════════════════════════════════ */
+
+const BASE = "https://mericaltinors1983-max.github.io/LaFamilia/";
+const GOLD = "#C9A84C";
+const BLACK = "#111111";
+const BB = { fontFamily: "'Bebas Neue', sans-serif" };
+const OS = { fontFamily: "'Oswald', sans-serif" };
+
+function fmtCd(s) {
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  if (h > 0) return `${h}:${String(m).padStart(2,"0")}:${String(sec).padStart(2,"0")}`;
+  return `${m}:${String(sec).padStart(2,"0")}`;
+}
+
+/* ─── Shared Layout ─── */
+function Popup({ children, onClose }) {
+  return (
+    <>
+      <div onClick={onClose} style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.65)", zIndex:10000 }} />
+      <div onClick={e => e.stopPropagation()} style={{
+        position:"fixed", top:90, left:"50%", transform:"translateX(-50%)",
+        width:320, height:520, background:"#fff",
+        border:"3px double #111", borderBottom:"none",
+        zIndex:10001, display:"flex", flexDirection:"column", overflow:"hidden",
+        fontFamily:"'Oswald', sans-serif", textTransform:"uppercase"
+      }}>
+        {children}
+      </div>
+    </>
+  );
+}
+
+function PopHeader({ icon, title, onClose, extra }) {
+  return (
+    <div style={{
+      height:44, borderBottom:"3px double #111", flexShrink:0,
+      display:"flex", alignItems:"center", justifyContent:"space-between", padding:"0 10px",
+      position:"relative"
+    }}>
+      <div style={{ width:28, height:28, display:"flex", alignItems:"center", justifyContent:"center", fontSize:22, zIndex:2 }}>
+        {icon}
+      </div>
+      <div style={{ position:"absolute", left:"50%", transform:"translateX(-50%)", ...BB, fontSize:18, letterSpacing:3, color:BLACK }}>
+        {title || "LaFamilia"}
+      </div>
+      <div style={{ display:"flex", alignItems:"center", gap:6, zIndex:2 }}>
+        {extra}
+        <button onClick={onClose} style={{ background:"none", border:"none", cursor:"pointer", fontSize:20, color:GOLD, lineHeight:1 }}>✕</button>
+      </div>
+    </div>
+  );
+}
+
+function CloseBar({ onClose, label="KAPAT" }) {
+  return (
+    <div onClick={onClose} style={{
+      height:44, borderTop:"3px double #111", flexShrink:0,
+      display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer"
+    }}>
+      <span style={{ ...OS, fontSize:12, color:"#999", letterSpacing:2, fontWeight:700 }}>{label}</span>
+    </div>
+  );
+}
+
+function StatRow({ label, value, valueColor="#111" }) {
+  return (
+    <div style={{
+      display:"flex", justifyContent:"space-between", alignItems:"center",
+      padding:"7px 12px", background:"#f9f9f9", borderBottom:"1px solid #f0f0f0"
+    }}>
+      <span style={{ ...OS, fontSize:10, color:"#888", letterSpacing:1 }}>{label}</span>
+      <span style={{ ...BB, fontSize:14, color:valueColor, letterSpacing:1 }}>{value}</span>
+    </div>
+  );
+}
+
+function CommitBtn({ onClick, disabled, label="COMMIT", cd=0 }) {
+  return (
+    <button onClick={disabled ? undefined : onClick} style={{
+      width:"100%", padding:14, background: disabled ? "#e0e0e0" : BLACK,
+      color: disabled ? "#aaa" : "#fff", border:"none",
+      cursor: disabled ? "not-allowed" : "pointer",
+      ...BB, fontSize:17, letterSpacing:3,
+      transition:"background 0.15s"
+    }}>
+      {cd > 0 ? `⏳ ${fmtCd(cd)}` : label}
+    </button>
+  );
+}
+
+function ProgressBar({ value, color=BLACK }) {
+  return (
+    <div style={{ width:"100%", height:5, background:"#eee", borderRadius:3, overflow:"hidden" }}>
+      <div style={{ height:"100%", width:value+"%", background:color, borderRadius:3, transition:"width 0.1s" }} />
+    </div>
+  );
+}
+
+function CommitScreen({ label="İŞLEM YAPILIYOR...", emoji="🏃", progress, color=BLACK }) {
+  return (
+    <div style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:24, gap:16 }}>
+      <div style={{ fontSize:44 }}>{emoji}</div>
+      <div style={{ ...BB, fontSize:18, letterSpacing:2 }}>{label}</div>
+      <div style={{ width:"100%", height:6, background:"#eee", borderRadius:3, overflow:"hidden" }}>
+        <div style={{ height:"100%", width:progress+"%", background:color, borderRadius:3, transition:"width 0.1s" }} />
+      </div>
+      <div style={{ ...OS, fontSize:11, color:"#888" }}>{Math.round(progress)}%</div>
+    </div>
+  );
+}
+
+function WinScreen({ amount, flavor, onAgain, onClose }) {
+  return (
+    <div style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:24, gap:12 }}>
+      <div style={{ fontSize:52 }}>✅</div>
+      <div style={{ ...BB, fontSize:24, letterSpacing:2, color:"#22c55e" }}>BAŞARILI!</div>
+      <div style={{ ...BB, fontSize:34, color:BLACK }}>{amount}</div>
+      <div style={{ ...OS, fontSize:11, color:"#888", textAlign:"center", fontStyle:"italic", lineHeight:1.5, padding:"0 8px" }}>
+        "{flavor}"
+      </div>
+      <div style={{ display:"flex", gap:8, width:"100%", marginTop:8 }}>
+        <button onClick={onAgain} style={{ flex:1, padding:12, background:BLACK, color:"#fff", border:"none", cursor:"pointer", ...BB, fontSize:13, letterSpacing:2 }}>TEKRAR</button>
+        <button onClick={onClose} style={{ flex:1, padding:12, background:"none", color:"#888", border:"1.5px solid #ddd", cursor:"pointer", ...BB, fontSize:13, letterSpacing:2 }}>KAPAT</button>
+      </div>
+    </div>
+  );
+}
+
+function JailScreen({ bail, flavor, onPay, onClose }) {
+  return (
+    <div style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:24, gap:12 }}>
+      <div style={{ fontSize:52 }}>🚔</div>
+      <div style={{ ...BB, fontSize:24, letterSpacing:2, color:"#ef4444" }}>YAKALANDIN!</div>
+      <div style={{ ...OS, fontSize:11, color:"#888", textAlign:"center", fontStyle:"italic", lineHeight:1.5, padding:"0 8px" }}>
+        "{flavor}"
+      </div>
+      <div style={{ width:"100%", background:"#fff3f3", border:"1px solid #fca5a5", padding:"10px 14px", borderRadius:4 }}>
+        <div style={{ ...OS, fontSize:9, color:"#ef4444", fontWeight:700, letterSpacing:1.5 }}>KEFALET</div>
+        <div style={{ ...BB, fontSize:22, color:BLACK }}>{bail}</div>
+      </div>
+      <div style={{ display:"flex", gap:8, width:"100%" }}>
+        <button onClick={onPay} style={{ flex:1, padding:12, background:"#ef4444", color:"#fff", border:"none", cursor:"pointer", ...BB, fontSize:12, letterSpacing:1 }}>KEFALETİ ÖDE</button>
+        <button onClick={onClose} style={{ flex:1, padding:12, background:"none", color:"#888", border:"1.5px solid #ddd", cursor:"pointer", ...BB, fontSize:12, letterSpacing:1 }}>BUSTOUT BEKLEMİ</button>
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════
+   1. ALL CRIMES OVERVIEW
+   ══════════════════════════════════════════════════════ */
+function AllCrimesPopup({ onSelect, onClose }) {
+  const crimes = [
+    { id:"of", icon:"🦹", label:"OFFENDER",      sub:"Sokak suçu · Solo",     cd:0,     reward:"$10–$50",    pct:68, color:"#22c55e" },
+    { id:"ar", icon:"🔫", label:"ARMED ROBBERY",  sub:"Silahlı soygun · Solo", cd:0,     reward:"$200–$800",  pct:55, color:GOLD },
+    { id:"ij", icon:"🏦", label:"INSIDE JOB",     sub:"Banka · Partner",       cd:0,     reward:"$1K–$5K",    pct:65, color:"#3b82f6" },
+    { id:"fe", icon:"💣", label:"FELONY",          sub:"Büyük soygun · Ekip",   cd:43200, reward:"$10K–$50K",  pct:40, color:"#a855f7" },
+  ];
+
+  return (
+    <Popup onClose={onClose}>
+      <div style={{ height:44, borderBottom:"3px double #111", flexShrink:0, display:"flex", alignItems:"center", justifyContent:"space-between", padding:"0 14px" }}>
+        <div style={{ ...BB, fontSize:20, letterSpacing:3 }}>ALL CRIMES</div>
+        <button onClick={onClose} style={{ background:"none", border:"none", cursor:"pointer", fontSize:20, color:GOLD }}>✕</button>
+      </div>
+
+      <div style={{ flex:1, overflowY:"auto" }}>
+        {crimes.map((c, i) => (
+          <div key={c.id} onClick={() => onSelect(c.id)} style={{
+            display:"flex", alignItems:"center", gap:12, padding:"13px 14px",
+            borderBottom:"1px solid #f0f0f0", cursor:"pointer", background:"#fff",
+            transition:"background 0.1s"
+          }}
+            onMouseEnter={e => e.currentTarget.style.background = "#f9f9f9"}
+            onMouseLeave={e => e.currentTarget.style.background = "#fff"}
+          >
+            <div style={{ width:46, height:46, background:"#f5f5f5", borderRadius:8, display:"flex", alignItems:"center", justifyContent:"center", fontSize:25, flexShrink:0 }}>
+              {c.icon}
+            </div>
+            <div style={{ flex:1, minWidth:0 }}>
+              <div style={{ ...BB, fontSize:15, color:BLACK, letterSpacing:1 }}>{c.label}</div>
+              <div style={{ ...OS, fontSize:9, color:"#aaa", letterSpacing:0.5, marginTop:1 }}>{c.sub}</div>
+              <div style={{ height:3, background:"#eee", borderRadius:2, overflow:"hidden", marginTop:5 }}>
+                <div style={{ height:"100%", width:c.pct+"%", background:c.color, borderRadius:2 }} />
+              </div>
+            </div>
+            <div style={{ textAlign:"right", flexShrink:0 }}>
+              <div style={{ ...BB, fontSize:13, color: c.cd > 0 ? "#ef4444" : "#22c55e", letterSpacing:0.5 }}>
+                {c.cd > 0 ? fmtCd(c.cd) : "HAZIR ✓"}
+              </div>
+              <div style={{ ...OS, fontSize:9, color:"#888", marginTop:2 }}>{c.reward}</div>
+            </div>
+            <div style={{ color:"#ccc", fontSize:20, marginLeft:2 }}>›</div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ padding:"12px 14px", borderTop:"1px solid #f0f0f0", flexShrink:0 }}>
+        <div style={{ ...OS, fontSize:9, color:"#aaa", letterSpacing:1, textAlign:"center" }}>
+          TOPLAM SUÇLARIN BAŞARI ORANI RANK'A GÖRE ARTAR
+        </div>
+      </div>
+      <CloseBar onClose={onClose} />
+    </Popup>
+  );
+}
+
+/* ══════════════════════════════════════════════════════
+   2. OFFENDER
+   ══════════════════════════════════════════════════════ */
+function OffenderPopup({ onClose }) {
+  const [sc, setSc] = useState("main");
+  const [prog, setProg] = useState(0);
+  const [cd, setCd] = useState(0);
+  const cdRef = useRef(null);
+
+  function commit() {
+    setSc("commit"); setProg(0);
+    let p = 0;
+    const iv = setInterval(() => {
+      p += 7 + Math.random() * 10; setProg(Math.min(100, p));
+      if (p >= 100) { clearInterval(iv); setTimeout(() => setSc(Math.random() < 0.68 ? "win" : "jail"), 200); }
+    }, 80);
+  }
+  function again() {
+    setCd(300); setSc("main");
+    clearInterval(cdRef.current);
+    cdRef.current = setInterval(() => setCd(c => { if (c <= 1) { clearInterval(cdRef.current); return 0; } return c - 1; }), 1000);
+  }
+
+  const WIN_FLAVORS = ["Temiz iş. Kimse fark etmedi.", "Hızlı gir hızlı çık.", "Sokak senin, para benim.", "Gece işleri böyle olur."];
+  const FAIL_FLAVORS = ["Yanlış zamanda yanlış yerde.", "Polis bekliyordu.", "Birisi ihbar etti.", "Çok aceleci davrandın."];
+
+  return (
+    <Popup onClose={onClose}>
+      <PopHeader icon={<img src={BASE+"gif_offender.gif"} style={{width:28,height:28,objectFit:"contain"}} onError={e=>e.target.style.display="none"} />} onClose={onClose} />
+
+      <div style={{ flex:1, overflow:"hidden", display:"flex", flexDirection:"column" }}>
+        {sc === "main" && (
+          <div style={{ flex:1, display:"flex", flexDirection:"column", overflow:"hidden" }}>
+            <div style={{ display:"flex", flexDirection:"column", alignItems:"center", padding:"12px 0 8px", borderBottom:"1px solid #f0f0f0", flexShrink:0 }}>
+              <img src={BASE+"offeender.png"} style={{ width:110, height:110, objectFit:"contain" }} onError={e => e.target.outerHTML = "<span style='font-size:70px'>🦹</span>"} />
+              <div style={{ ...BB, fontSize:22, letterSpacing:3, color:BLACK, marginTop:6 }}>OFFENDER</div>
+              <div style={{ ...OS, fontSize:10, color:"#888", letterSpacing:1, marginTop:2 }}>Basit sokak suçu · Solo · 5dk cooldown</div>
+            </div>
+
+            <div style={{ flex:1, overflowY:"auto" }}>
+              <StatRow label="BAŞARI ORANI" value="68%" valueColor="#22c55e" />
+              <StatRow label="ÖDÜL" value="$10 – $50" valueColor="#22c55e" />
+              <StatRow label="CEZA (FAIL)" value="Hapis · $500 kefalet" valueColor="#ef4444" />
+              <StatRow label="XP" value="+12 XP" valueColor="#f97316" />
+              <StatRow label="COOLDOWN" value={cd > 0 ? fmtCd(cd) : "HAZIR ✓"} valueColor={cd > 0 ? "#ef4444" : "#22c55e"} />
+
+              <div style={{ padding:"10px 12px" }}>
+                <div style={{ ...OS, fontSize:9, color:"#aaa", letterSpacing:1, marginBottom:6 }}>BAŞARI OLASILIĞI</div>
+                <ProgressBar value={68} color="#22c55e" />
+              </div>
+            </div>
+
+            <div style={{ padding:"0 0 0", flexShrink:0 }}>
+              <CommitBtn onClick={commit} disabled={cd > 0} cd={cd} />
+            </div>
+          </div>
+        )}
+
+        {sc === "commit" && <CommitScreen label="SUÇ İŞLENİYOR..." emoji="🏃" progress={prog} />}
+
+        {sc === "win" && (
+          <WinScreen
+            amount={`+$${Math.floor(10 + Math.random() * 40)}`}
+            flavor={WIN_FLAVORS[Math.floor(Math.random() * WIN_FLAVORS.length)]}
+            onAgain={again} onClose={onClose}
+          />
+        )}
+        {sc === "jail" && (
+          <JailScreen
+            bail="$500"
+            flavor={FAIL_FLAVORS[Math.floor(Math.random() * FAIL_FLAVORS.length)]}
+            onPay={again} onClose={onClose}
+          />
+        )}
+      </div>
+      <CloseBar onClose={onClose} />
+    </Popup>
+  );
+}
+
+/* ══════════════════════════════════════════════════════
+   3. ARMED ROBBERY
+   ══════════════════════════════════════════════════════ */
+function ArmedRobberyPopup({ onClose }) {
+  const [sc, setSc] = useState("main");
+  const [prog, setProg] = useState(0);
+  const [cd, setCd] = useState(0);
+  const cdRef = useRef(null);
+
+  function commit() {
+    setSc("commit"); setProg(0);
+    let p = 0;
+    const iv = setInterval(() => {
+      p += 4 + Math.random() * 7; setProg(Math.min(100, p));
+      if (p >= 100) { clearInterval(iv); setTimeout(() => setSc(Math.random() < 0.55 ? "win" : "jail"), 200); }
+    }, 110);
+  }
+  function again() {
+    setCd(900); setSc("main");
+    clearInterval(cdRef.current);
+    cdRef.current = setInterval(() => setCd(c => { if (c <= 1) { clearInterval(cdRef.current); return 0; } return c - 1; }), 1000);
+  }
+
+  return (
+    <Popup onClose={onClose}>
+      <PopHeader icon={<img src={BASE+"gif_armedrob.gif"} style={{width:28,height:28,objectFit:"contain"}} onError={e=>e.target.style.display="none"} />} onClose={onClose} />
+
+      <div style={{ flex:1, overflow:"hidden", display:"flex", flexDirection:"column" }}>
+        {sc === "main" && (
+          <div style={{ flex:1, display:"flex", flexDirection:"column", overflow:"hidden" }}>
+            <div style={{ display:"flex", flexDirection:"column", alignItems:"center", padding:"12px 0 8px", borderBottom:"1px solid #f0f0f0", flexShrink:0 }}>
+              <img src={BASE+"armedrobbery.png"} style={{ width:110, height:110, objectFit:"contain" }} onError={e => e.target.outerHTML = "<span style='font-size:70px'>🔫</span>"} />
+              <div style={{ ...BB, fontSize:22, letterSpacing:3, color:BLACK, marginTop:6 }}>ARMED ROBBERY</div>
+              <div style={{ ...OS, fontSize:10, color:"#888", letterSpacing:1, marginTop:2 }}>Silahlı soygun · Solo · 15dk cooldown</div>
+            </div>
+
+            <div style={{ flex:1, overflowY:"auto" }}>
+              <StatRow label="BAŞARI ORANI" value="55%" valueColor={GOLD} />
+              <StatRow label="ÖDÜL" value="$200 – $800" valueColor="#22c55e" />
+              <StatRow label="MERMİ MALİYETİ" value="–5 🔴" valueColor="#ef4444" />
+              <StatRow label="CEZA (FAIL)" value="Hapis · $2,000 kefalet" valueColor="#ef4444" />
+              <StatRow label="XP" value="+45 XP" valueColor="#f97316" />
+              <StatRow label="COOLDOWN" value={cd > 0 ? fmtCd(cd) : "HAZIR ✓"} valueColor={cd > 0 ? "#ef4444" : "#22c55e"} />
+
+              <div style={{ padding:"10px 12px" }}>
+                <div style={{ ...OS, fontSize:9, color:"#aaa", letterSpacing:1, marginBottom:6 }}>BAŞARI OLASILIĞI</div>
+                <ProgressBar value={55} color={GOLD} />
+              </div>
+
+              {/* Ammo warning */}
+              <div style={{ margin:"0 12px 10px", background:"#fff8f3", border:"1px solid #fed7aa", padding:"8px 10px", borderRadius:4 }}>
+                <div style={{ ...OS, fontSize:9, color:"#f97316", fontWeight:700, letterSpacing:1 }}>⚠ MERMİ GEREKLİ</div>
+                <div style={{ ...OS, fontSize:10, color:"#888", marginTop:2 }}>En az 5 mermi olmalı. Şu an: 1,000 adet</div>
+              </div>
+            </div>
+
+            <div style={{ flexShrink:0 }}>
+              <CommitBtn onClick={commit} disabled={cd > 0} cd={cd} />
+            </div>
+          </div>
+        )}
+
+        {sc === "commit" && <CommitScreen label="SOYGUN YAPILIYOR..." emoji="🔫" progress={prog} color="#ef4444" />}
+
+        {sc === "win" && (
+          <WinScreen
+            amount={`+$${Math.floor(200 + Math.random() * 600)}`}
+            flavor="Hızlı ve profesyonel. Kimse fark etmedi."
+            onAgain={again} onClose={onClose}
+          />
+        )}
+        {sc === "jail" && (
+          <JailScreen
+            bail="$2,000"
+            flavor="Alarm sistemi varmiş. Kötü zamanlama."
+            onPay={again} onClose={onClose}
+          />
+        )}
+      </div>
+      <CloseBar onClose={onClose} />
+    </Popup>
+  );
+}
+
+/* ══════════════════════════════════════════════════════
+   4. INSIDE JOB
+   main → partner-seç → (input target) → wait → win / jail
+   ══════════════════════════════════════════════════════ */
+const IJ_PARTNERS = [
+  { id:"ghost",  name:"GHOST_47",   rank:6,  ks:1.2, icon:"🤝", bonus:8,  color:"#22c55e" },
+  { id:"iron",   name:"IRON_WOLF",  rank:9,  ks:3.4, icon:"🐺", bonus:15, color:"#3b82f6" },
+  { id:"viper",  name:"VIPER_X",    rank:7,  ks:2.1, icon:"🐍", bonus:10, color:GOLD },
+  { id:"raven",  name:"RAVEN",      rank:5,  ks:1.0, icon:"👤", bonus:5,  color:"#888" },
+];
+
+function InsideJobPopup({ onClose }) {
+  const [sc, setSc] = useState("main");
+  const [partner, setPartner] = useState(null);
+  const [target, setTarget] = useState("istanbul");
+  const [waitLeft, setWaitLeft] = useState(0);
+  const waitRef = useRef(null);
+
+  function commit() {
+    setWaitLeft(8);
+    setSc("wait");
+    let t = 8;
+    clearInterval(waitRef.current);
+    waitRef.current = setInterval(() => {
+      t--; setWaitLeft(t);
+      if (t <= 0) {
+        clearInterval(waitRef.current);
+        const pct = 0.55 + (partner ? partner.bonus / 100 : 0);
+        setSc(Math.random() < pct ? "win" : "jail");
+      }
+    }, 1000);
+  }
+
+  const successPct = Math.round(55 + (partner ? partner.bonus : 0));
+
+  return (
+    <Popup onClose={onClose}>
+      <PopHeader icon={<img src={BASE+"gif_insidejob.gif"} style={{width:28,height:28,objectFit:"contain"}} onError={e=>e.target.style.display="none"} />} onClose={onClose} />
+
+      <div style={{ flex:1, overflow:"hidden", display:"flex", flexDirection:"column" }}>
+
+        {/* ── MAIN ── */}
+        {sc === "main" && (
+          <div style={{ flex:1, display:"flex", flexDirection:"column", overflow:"hidden" }}>
+            <div style={{ display:"flex", flexDirection:"column", alignItems:"center", padding:"12px 0 8px", borderBottom:"1px solid #f0f0f0", flexShrink:0 }}>
+              <img src={BASE+"insidejob.png"} style={{ width:110, height:110, objectFit:"contain" }} onError={e => e.target.outerHTML = "<span style='font-size:70px'>🏦</span>"} />
+              <div style={{ ...BB, fontSize:22, letterSpacing:3, color:BLACK, marginTop:6 }}>INSIDE JOB</div>
+              <div style={{ ...OS, fontSize:10, color:"#888", letterSpacing:1, marginTop:2 }}>Banka soygun · Partner seç · 30dk cooldown</div>
+            </div>
+
+            <div style={{ flex:1, overflowY:"auto" }}>
+              <StatRow label="BAŞARI ORANI" value={successPct+"%"} valueColor="#3b82f6" />
+              <StatRow label="ÖDÜL" value="$1,000 – $5,000" valueColor="#22c55e" />
+              <StatRow label="COOLDOWN" value="HAZIR ✓" valueColor="#22c55e" />
+
+              {/* Partner slot */}
+              <div onClick={() => setSc("partner")} style={{
+                margin:"10px 12px", border: partner ? "1.5px solid #22c55e" : "1.5px dashed #ddd",
+                borderRadius:6, padding:"10px 12px", cursor:"pointer",
+                background: partner ? "#f0fdf4" : "#fafafa"
+              }}>
+                <div style={{ ...OS, fontSize:9, color:"#aaa", letterSpacing:1, marginBottom:4 }}>PARTNER</div>
+                {partner ? (
+                  <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+                    <span style={{ fontSize:26 }}>{partner.icon}</span>
+                    <div style={{ flex:1 }}>
+                      <div style={{ ...BB, fontSize:15, color:BLACK }}>{partner.name}</div>
+                      <div style={{ ...OS, fontSize:9, color:"#888" }}>RANK {partner.rank} · KS {partner.ks} · <span style={{color:"#22c55e"}}>+{partner.bonus}% BAŞARI</span></div>
+                    </div>
+                    <span style={{ color:"#22c55e", fontSize:14 }}>✓ DEĞİŞTİR</span>
+                  </div>
+                ) : (
+                  <div style={{ ...OS, fontSize:11, color:"#aaa", textAlign:"center" }}>Partner seç → bonus başarı</div>
+                )}
+              </div>
+
+              {/* Target */}
+              <div style={{ margin:"0 12px 10px" }}>
+                <div style={{ ...OS, fontSize:9, color:"#aaa", letterSpacing:1, marginBottom:4 }}>HEDEF BANKA</div>
+                <select value={target} onChange={e => setTarget(e.target.value)} style={{
+                  width:"100%", padding:"8px 10px", border:"1.5px solid #ddd", borderRadius:4,
+                  ...OS, fontSize:12, color:BLACK, fontWeight:600, background:"#fff"
+                }}>
+                  <option value="istanbul">İstanbul Bankası · $3,200</option>
+                  <option value="napoli">Napoli Bankası · $4,100</option>
+                  <option value="newyork">New York Fed · $5,000</option>
+                </select>
+              </div>
+
+              {/* Pct bar */}
+              <div style={{ padding:"0 12px 10px" }}>
+                <div style={{ ...OS, fontSize:9, color:"#aaa", letterSpacing:1, marginBottom:6 }}>BAŞARI ORANI</div>
+                <ProgressBar value={successPct} color="#3b82f6" />
+              </div>
+            </div>
+
+            <div style={{ flexShrink:0 }}>
+              <CommitBtn onClick={commit} label="COMMIT" />
+            </div>
+          </div>
+        )}
+
+        {/* ── PARTNER SEÇ ── */}
+        {sc === "partner" && (
+          <div style={{ flex:1, display:"flex", flexDirection:"column", overflow:"hidden" }}>
+            <div style={{ padding:"10px 14px", borderBottom:"1px solid #eee", flexShrink:0, display:"flex", alignItems:"center", gap:8 }}>
+              <button onClick={() => setSc("main")} style={{ background:"none", border:"none", cursor:"pointer", ...BB, fontSize:14, color:"#888" }}>◀</button>
+              <span style={{ ...BB, fontSize:16, letterSpacing:2 }}>PARTNER SEÇ</span>
+            </div>
+            <div style={{ flex:1, overflowY:"auto" }}>
+              {IJ_PARTNERS.map(p => (
+                <div key={p.id} onClick={() => { setPartner(p); setSc("main"); }} style={{
+                  display:"flex", alignItems:"center", gap:12, padding:"12px 14px",
+                  borderBottom:"1px solid #f5f5f5", cursor:"pointer",
+                  background: partner?.id === p.id ? "#f0fdf4" : "#fff"
+                }}>
+                  <div style={{ width:40, height:40, borderRadius:20, background:"#f5f5f5", display:"flex", alignItems:"center", justifyContent:"center", fontSize:22, flexShrink:0, border: partner?.id === p.id ? "2px solid #22c55e" : "2px solid transparent" }}>
+                    {p.icon}
+                  </div>
+                  <div style={{ flex:1 }}>
+                    <div style={{ ...BB, fontSize:15, color:BLACK }}>{p.name}</div>
+                    <div style={{ ...OS, fontSize:9, color:"#888" }}>RANK {p.rank} · KS {p.ks}</div>
+                  </div>
+                  <div style={{ textAlign:"right" }}>
+                    <div style={{ ...BB, fontSize:14, color:p.color }}>+{p.bonus}%</div>
+                    <div style={{ ...OS, fontSize:9, color:"#aaa" }}>BAŞARI</div>
+                  </div>
+                  {partner?.id === p.id && <span style={{ color:"#22c55e", fontSize:16 }}>✓</span>}
+                </div>
+              ))}
+              <div onClick={() => { setPartner(null); setSc("main"); }} style={{
+                padding:"12px 14px", cursor:"pointer", color:"#aaa",
+                ...OS, fontSize:11, letterSpacing:1, textAlign:"center",
+                borderBottom:"1px solid #f5f5f5"
+              }}>
+                PARTNERSIZ DEVAM ET
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── WAIT ── */}
+        {sc === "wait" && (
+          <div style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:24, gap:16 }}>
+            <div style={{ fontSize:44 }}>⏳</div>
+            <div style={{ ...BB, fontSize:18, letterSpacing:2 }}>PLAN YAPILIYOR...</div>
+            <div style={{ ...BB, fontSize:64, color:GOLD, letterSpacing:2, lineHeight:1 }}>{waitLeft}</div>
+            <div style={{ ...OS, fontSize:11, color:"#888" }}>saniye kaldı</div>
+            {partner && (
+              <div style={{ ...OS, fontSize:11, color:"#aaa", textAlign:"center" }}>
+                {partner.icon} {partner.name} ile koordinasyon...
+              </div>
+            )}
+          </div>
+        )}
+
+        {sc === "win" && (
+          <WinScreen
+            amount={`+$${(3000 + Math.floor(Math.random()*2000)).toLocaleString()}`}
+            flavor="Vault çatladı. Textbook execution. Kimse konuşmadı."
+            onAgain={() => { setPartner(null); setSc("main"); }} onClose={onClose}
+          />
+        )}
+        {sc === "jail" && (
+          <JailScreen
+            bail="$5,000"
+            flavor="Birisi konuştu. İş başlamadan bitti."
+            onPay={() => { setPartner(null); setSc("main"); }} onClose={onClose}
+          />
+        )}
+      </div>
+      <CloseBar onClose={onClose} />
+    </Popup>
+  );
+}
+
+/* ══════════════════════════════════════════════════════
+   5. FELONY
+   intro → team(EKİP KUR) → calc → execute → win / jail
+   ══════════════════════════════════════════════════════ */
+const FE_ROLES = {
+  sofor:    { label:"ŞOFÖR",         icon:"🚗", color:"#3b82f6",  options:[{name:"GHOST_47",rank:6,bonus:8},{name:"IRON_WOLF",rank:9,bonus:14}] },
+  nisanci1: { label:"NİŞANCI 1",     icon:"🎯", color:"#ef4444",  options:[{name:"VIPER_X",rank:7,bonus:10},{name:"BLACK_ACE",rank:8,bonus:13}] },
+  nisanci2: { label:"NİŞANCI 2",     icon:"🎯", color:"#ef4444",  options:[{name:"COBRA_K",rank:5,bonus:6},{name:"RED_BEAR",rank:8,bonus:11}] },
+  bomba:    { label:"BOMBA UZMANI",  icon:"💣", color:"#f97316",  options:[{name:"SHADOW_99",rank:7,bonus:14},{name:"DANTE_X",rank:9,bonus:18}] },
+};
+
+function FelonyPopup({ onClose }) {
+  const [sc, setSc] = useState("intro");
+  const [team, setTeam] = useState({ sofor:null, nisanci1:null, nisanci2:null, bomba:null });
+  const [tnt, setTnt] = useState(false);
+  const [calcPct, setCalcPct] = useState(null);
+  const [waitLeft, setWaitLeft] = useState(0);
+  const waitRef = useRef(null);
+  const [minimized, setMinimized] = useState(false);
+
+  function calc() {
+    let pct = 40;
+    Object.values(team).forEach(m => { if (m) pct += m.bonus; });
+    if (tnt) pct += 3;
+    setCalcPct(Math.min(95, pct));
+    setSc("calc");
+  }
+
+  function execute() {
+    setWaitLeft(12);
+    setSc("wait");
+    let t = 12;
+    clearInterval(waitRef.current);
+    waitRef.current = setInterval(() => {
+      t--; setWaitLeft(t);
+      if (t <= 0) {
+        clearInterval(waitRef.current);
+        setSc(Math.random() < (calcPct || 40) / 100 ? "win" : "jail");
+      }
+    }, 1000);
+  }
+
+  const pctColor = calcPct >= 70 ? "#22c55e" : calcPct >= 50 ? GOLD : "#ef4444";
+
+  if (minimized) {
+    return (
+      <div onClick={() => setMinimized(false)} style={{
+        position:"fixed", bottom:80, right:16,
+        width:56, height:56, background:BLACK, borderRadius:"50%",
+        border:`2px solid ${GOLD}`, cursor:"pointer", zIndex:10001,
+        display:"flex", alignItems:"center", justifyContent:"center", fontSize:24
+      }}>💣</div>
+    );
+  }
+
+  return (
+    <Popup onClose={onClose}>
+      <PopHeader
+        icon={<img src={BASE+"gif_felony.gif"} style={{width:28,height:28,objectFit:"contain"}} onError={e=>e.target.style.display="none"} />}
+        onClose={onClose}
+        extra={
+          <button onClick={() => setMinimized(true)} style={{ background:"none", border:"none", cursor:"pointer", fontSize:16, color:"#888", lineHeight:1 }}>—</button>
+        }
+      />
+
+      <div style={{ flex:1, overflow:"hidden", display:"flex", flexDirection:"column" }}>
+
+        {/* ── INTRO ── */}
+        {sc === "intro" && (
+          <div style={{ flex:1, display:"flex", flexDirection:"column", overflow:"hidden" }}>
+            <div style={{ display:"flex", flexDirection:"column", alignItems:"center", padding:"12px 0 8px", borderBottom:"1px solid #f0f0f0", flexShrink:0 }}>
+              <img src={BASE+"mafia.png"} style={{ width:110, height:110, objectFit:"contain" }} onError={e => e.target.outerHTML = "<span style='font-size:70px'>💣</span>"} />
+              <div style={{ ...BB, fontSize:22, letterSpacing:3, color:BLACK, marginTop:6 }}>FELONY</div>
+              <div style={{ ...OS, fontSize:10, color:"#888", letterSpacing:1, marginTop:2 }}>Büyük soygun · Ekip gerekli · 12 saat cooldown</div>
+            </div>
+
+            <div style={{ flex:1, overflowY:"auto" }}>
+              <StatRow label="ÖDÜL" value="$10,000 – $50,000" valueColor="#22c55e" />
+              <StatRow label="BAŞARI (SOLO)" value="40%" valueColor="#ef4444" />
+              <StatRow label="BAŞARI (FULL EKİP)" value="61%+" valueColor="#22c55e" />
+              <StatRow label="CEZA (FAIL)" value="Hapis · $25,000 kefalet" valueColor="#ef4444" />
+              <StatRow label="COOLDOWN" value="12 SAAT" valueColor="#aaa" />
+
+              {/* Contribution PNG placeholder */}
+              <div style={{ margin:"10px 12px", background:"#f5f5f5", borderRadius:8, padding:12, textAlign:"center" }}>
+                <div style={{ ...OS, fontSize:9, color:"#aaa", letterSpacing:1.5, marginBottom:6 }}>KATKIDAN NE ALIRSIN?</div>
+                <div style={{ display:"flex", justifyContent:"space-around" }}>
+                  {["EKİP PAY", "XP BONUS", "RANK PTS"].map(l => (
+                    <div key={l} style={{ textAlign:"center" }}>
+                      <div style={{ ...BB, fontSize:14, color:BLACK }}>%25</div>
+                      <div style={{ ...OS, fontSize:8, color:"#aaa" }}>{l}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div style={{ flexShrink:0 }}>
+              <CommitBtn onClick={() => setSc("team")} label="EKİP KUR →" />
+            </div>
+          </div>
+        )}
+
+        {/* ── TEAM ── */}
+        {sc === "team" && (
+          <div style={{ flex:1, display:"flex", flexDirection:"column", overflow:"hidden" }}>
+            <div style={{ padding:"8px 14px", borderBottom:"1px solid #eee", flexShrink:0, display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+              <button onClick={() => setSc("intro")} style={{ background:"none", border:"none", cursor:"pointer", ...BB, fontSize:13, color:"#888" }}>◀ GERİ</button>
+              <span style={{ ...BB, fontSize:16, letterSpacing:2 }}>EKİP KUR</span>
+              <div style={{ width:50 }} />
+            </div>
+
+            <div style={{ flex:1, overflowY:"auto", padding:"0 12px" }}>
+              {Object.entries(FE_ROLES).map(([roleId, roleDef]) => (
+                <div key={roleId} style={{ marginTop:10 }}>
+                  <div style={{ ...OS, fontSize:9, color:roleDef.color, letterSpacing:1.5, fontWeight:700, marginBottom:4 }}>
+                    {roleDef.icon} {roleDef.label}
+                  </div>
+                  {roleDef.options.map(opt => {
+                    const sel = team[roleId]?.name === opt.name;
+                    return (
+                      <div key={opt.name} onClick={() => setTeam(t => ({ ...t, [roleId]: sel ? null : opt }))} style={{
+                        display:"flex", alignItems:"center", gap:10, padding:"8px 10px",
+                        border: `1.5px solid ${sel ? "#22c55e" : "#eee"}`,
+                        borderRadius:6, marginBottom:4, cursor:"pointer",
+                        background: sel ? "#f0fdf4" : "#fff"
+                      }}>
+                        <span style={{ fontSize:18 }}>{roleDef.icon}</span>
+                        <div style={{ flex:1 }}>
+                          <div style={{ ...BB, fontSize:14, color:BLACK }}>{opt.name}</div>
+                          <div style={{ ...OS, fontSize:9, color:"#888" }}>RANK {opt.rank} · +{opt.bonus}% başarı</div>
+                        </div>
+                        <div style={{ ...BB, fontSize:13, color: sel ? "#22c55e" : "#aaa" }}>
+                          {sel ? "✓ SEÇİLDİ" : `+${opt.bonus}%`}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
+
+              {/* TNT */}
+              <div style={{
+                marginTop:12, display:"flex", alignItems:"center", gap:12,
+                padding:"10px 10px", border:"1.5px solid #eee", borderRadius:6,
+                background: tnt ? "#fffbeb" : "#fff", cursor:"pointer"
+              }} onClick={() => setTnt(t => !t)}>
+                <div style={{ width:22, height:22, borderRadius:4, border:`2px solid ${tnt ? GOLD : "#ddd"}`, background: tnt ? GOLD : "#fff", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+                  {tnt && <span style={{ color:"#111", fontSize:14, lineHeight:1 }}>✓</span>}
+                </div>
+                <div style={{ flex:1 }}>
+                  <div style={{ ...BB, fontSize:13, color:BLACK }}>TNT KULLAN</div>
+                  <div style={{ ...OS, fontSize:9, color:"#888" }}>+3% BAŞARI · $50,000 MALİYET</div>
+                </div>
+                <span style={{ ...BB, fontSize:13, color: tnt ? GOLD : "#aaa" }}>{tnt ? "+3% ✓" : "+3%"}</span>
+              </div>
+
+              <div style={{ height:12 }} />
+            </div>
+
+            <div style={{ padding:"0 0 0", flexShrink:0 }}>
+              <CommitBtn onClick={calc} label="HESAPLA" />
+            </div>
+          </div>
+        )}
+
+        {/* ── CALC ── */}
+        {sc === "calc" && (
+          <div style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:24, gap:14 }}>
+            <div style={{ ...OS, fontSize:11, color:"#aaa", letterSpacing:2, fontWeight:700 }}>BAŞARI ORANI HESAPLANDI</div>
+            <div style={{ ...BB, fontSize:80, color:pctColor, lineHeight:1, letterSpacing:2 }}>{calcPct}%</div>
+            <div style={{ width:"100%", height:8, background:"#eee", borderRadius:4, overflow:"hidden" }}>
+              <div style={{ height:"100%", width:calcPct+"%", background:pctColor, borderRadius:4, transition:"width 0.8s cubic-bezier(0.34,1.56,0.64,1)" }} />
+            </div>
+            <div style={{ ...OS, fontSize:10, color:"#aaa", textAlign:"center", lineHeight:1.6 }}>
+              {Object.values(team).filter(Boolean).length} ekip üyesi
+              {tnt ? " · TNT aktif" : ""}<br />
+              <span style={{ color: calcPct >= 70 ? "#22c55e" : calcPct >= 50 ? GOLD : "#ef4444" }}>
+                {calcPct >= 70 ? "İyi şanslar!" : calcPct >= 50 ? "Riskli ama mümkün." : "Çok riskli!"}
+              </span>
+            </div>
+            <div style={{ display:"flex", gap:8, width:"100%" }}>
+              <button onClick={() => setSc("team")} style={{ flex:1, padding:12, background:"none", color:"#888", border:"1.5px solid #ddd", cursor:"pointer", ...BB, fontSize:13, letterSpacing:1 }}>
+                EKİP DEĞİŞTİR
+              </button>
+              <button onClick={execute} style={{ flex:1, padding:12, background:BLACK, color:"#fff", border:"none", cursor:"pointer", ...BB, fontSize:13, letterSpacing:1 }}>
+                EXECUTE
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ── WAIT ── */}
+        {sc === "wait" && (
+          <div style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:24, gap:14 }}>
+            <div style={{ fontSize:44 }}>💣</div>
+            <div style={{ ...BB, fontSize:18, letterSpacing:2 }}>OPERASYON BAŞLADI</div>
+            <div style={{ ...BB, fontSize:64, color:GOLD, lineHeight:1, letterSpacing:2 }}>{waitLeft}</div>
+            <div style={{ width:"100%", height:6, background:"#eee", borderRadius:3, overflow:"hidden" }}>
+              <div style={{ height:"100%", width:((12-waitLeft)/12*100)+"%", background:GOLD, borderRadius:3, transition:"width 1s" }} />
+            </div>
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:6, width:"100%" }}>
+              {Object.entries(FE_ROLES).map(([rid, rd]) => (
+                <div key={rid} style={{ ...OS, fontSize:9, color: team[rid] ? "#22c55e" : "#ef4444", letterSpacing:0.5 }}>
+                  {rd.icon} {rd.label}: {team[rid] ? team[rid].name : "YOK"}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {sc === "win" && (
+          <WinScreen
+            amount={`+$${(20000 + Math.floor(Math.random()*30000)).toLocaleString()}`}
+            flavor="Mükemmel koordinasyon. Herkes rolünü oynadı. Efsane."
+            onAgain={() => { setTeam({sofor:null,nisanci1:null,nisanci2:null,bomba:null}); setTnt(false); setCalcPct(null); setSc("intro"); }}
+            onClose={onClose}
+          />
+        )}
+        {sc === "jail" && (
+          <JailScreen
+            bail="$25,000"
+            flavor="Ekipte bir sızdırma vardı. Plan başlamadan bitti."
+            onPay={() => { setTeam({sofor:null,nisanci1:null,nisanci2:null,bomba:null}); setSc("intro"); }}
+            onClose={onClose}
+          />
+        )}
+      </div>
+
+      {/* Close + Minimize bar — calc ve intro sayfalarında */}
+      {(sc === "intro" || sc === "calc") && (
+        <div style={{ height:44, borderTop:"3px double #111", flexShrink:0, display:"flex" }}>
+          <div onClick={() => setMinimized(true)} style={{ flex:1, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", borderRight:"1px solid #eee" }}>
+            <span style={{ ...OS, fontSize:11, color:"#aaa", letterSpacing:1.5, fontWeight:700 }}>MİNİMİZE</span>
+          </div>
+          <div onClick={onClose} style={{ flex:1, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer" }}>
+            <span style={{ ...OS, fontSize:11, color:"#aaa", letterSpacing:1.5, fontWeight:700 }}>KAPAT</span>
+          </div>
+        </div>
+      )}
+    </Popup>
+  );
+}
+
+/* ══════════════════════════════════════════════════════
+   MAIN APP — dropdown + quick access buttons
+   ══════════════════════════════════════════════════════ */
+export default function App() {
+  const [popup, setPopup] = useState(null);
+  const [dropOpen, setDropOpen] = useState(false);
+
+  const MENU = [
+    { id:"all", label:"ALL CRIMES",    icon:"💀" },
+    { id:"of",  label:"OFFENDER",      icon:"🦹" },
+    { id:"ar",  label:"ARMED ROBBERY", icon:"🔫" },
+    { id:"ij",  label:"INSIDE JOB",    icon:"🏦" },
+    { id:"fe",  label:"FELONY",        icon:"💣" },
+  ];
+
+  function open(id) { setDropOpen(false); setPopup(id); }
+
+  return (
+    <div style={{
+      width:"100%", minHeight:"100vh", background:"#f4f4f4",
+      display:"flex", flexDirection:"column",
+      fontFamily:"'Oswald', sans-serif", textTransform:"uppercase"
+    }}>
+      {/* ── TOP NAV ── */}
+      <div style={{
+        background:"#fff", borderBottom:"1px solid #eee",
+        height:44, display:"flex", alignItems:"center",
+        justifyContent:"space-between", padding:"0 12px",
+        position:"relative", zIndex:100
+      }}>
+        <div style={{ ...BB, fontSize:18, letterSpacing:3, color:BLACK }}>LaFamilia</div>
+
+        {/* CRIME dropdown */}
+        <div style={{ position:"relative" }}>
+          <button onClick={() => setDropOpen(o => !o)} style={{
+            background: dropOpen ? BLACK : "#fff",
+            border: `1.5px solid ${dropOpen ? BLACK : "#ddd"}`,
+            color: dropOpen ? "#fff" : BLACK,
+            ...BB, fontSize:13, letterSpacing:1.5,
+            padding:"5px 12px", cursor:"pointer", borderRadius:2,
+            display:"flex", alignItems:"center", gap:5
+          }}>
+            <span style={{ fontSize:14 }}>💀</span> CRIME <span style={{ fontSize:10 }}>{dropOpen ? "▲" : "▼"}</span>
+          </button>
+
+          {dropOpen && (
+            <>
+              <div onClick={() => setDropOpen(false)} style={{ position:"fixed", inset:0, zIndex:9000 }} />
+              <div style={{
+                position:"absolute", top:"calc(100% + 2px)", right:0,
+                background:"#fff", borderTop:"2px solid #111",
+                border:"1px solid #e8e8e8",
+                zIndex:9001, minWidth:168,
+                boxShadow:"0 8px 24px rgba(0,0,0,0.10)"
+              }}>
+                {MENU.map((item, i) => (
+                  <div key={item.id} onClick={() => open(item.id)} style={{
+                    padding:"11px 16px", display:"flex", alignItems:"center", gap:10,
+                    ...OS, fontSize:12, fontWeight:700, letterSpacing:1.5, color:BLACK,
+                    cursor:"pointer",
+                    borderBottom: i < MENU.length - 1 ? "1px solid #f0f0f0" : "none",
+                    background:"#fff", transition:"background 0.1s"
+                  }}
+                    onMouseEnter={e => e.currentTarget.style.background = "#f5f5f5"}
+                    onMouseLeave={e => e.currentTarget.style.background = "#fff"}
+                  >
+                    <span style={{ fontSize:16 }}>{item.icon}</span>
+                    {item.label}
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* ── CONTENT ── */}
+      <div style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:20, gap:20 }}>
+        <div style={{ textAlign:"center" }}>
+          <div style={{ ...BB, fontSize:13, letterSpacing:3, color:"#aaa", marginBottom:4 }}>CRIME SYSTEM PROTOTYPES</div>
+          <div style={{ ...OS, fontSize:10, color:"#bbb", letterSpacing:1 }}>Yukarıdaki CRIME menüsünden veya aşağıdaki butonlardan aç</div>
+        </div>
+
+        <div style={{ display:"flex", flexWrap:"wrap", gap:10, justifyContent:"center", maxWidth:360 }}>
+          {MENU.map(b => (
+            <button key={b.id} onClick={() => open(b.id)} style={{
+              background:"#fff", border:"1.5px solid #e0e0e0", borderRadius:8,
+              padding:"12px 16px", cursor:"pointer", display:"flex",
+              flexDirection:"column", alignItems:"center", gap:5, minWidth:90,
+              transition:"border-color 0.15s, box-shadow 0.15s"
+            }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = BLACK; e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.1)"; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = "#e0e0e0"; e.currentTarget.style.boxShadow = "none"; }}
+            >
+              <span style={{ fontSize:28 }}>{b.icon}</span>
+              <span style={{ ...BB, fontSize:10, letterSpacing:1, color:BLACK, textAlign:"center" }}>{b.label}</span>
+            </button>
+          ))}
+        </div>
+
+        {/* Legend */}
+        <div style={{
+          background:"#fff", border:"1px solid #eee", borderRadius:8,
+          padding:"14px 18px", maxWidth:340, width:"100%"
+        }}>
+          <div style={{ ...BB, fontSize:12, letterSpacing:2, color:BLACK, marginBottom:10 }}>AKIŞ ÖZETI</div>
+          {[
+            { label:"OFFENDER", flow:"main → commit → win/jail", cd:"5dk" },
+            { label:"ARMED ROBBERY", flow:"main → commit → win/jail", cd:"15dk" },
+            { label:"INSIDE JOB", flow:"main → partner seç → wait → win/jail", cd:"30dk" },
+            { label:"FELONY", flow:"intro → ekip kur → hesapla → execute → win/jail", cd:"12sa" },
+          ].map(r => (
+            <div key={r.label} style={{ display:"flex", alignItems:"flex-start", gap:8, padding:"5px 0", borderBottom:"1px solid #f5f5f5" }}>
+              <div style={{ flex:1 }}>
+                <div style={{ ...BB, fontSize:11, color:BLACK, letterSpacing:0.5 }}>{r.label}</div>
+                <div style={{ ...OS, fontSize:9, color:"#aaa", textTransform:"none", marginTop:1 }}>{r.flow}</div>
+              </div>
+              <div style={{ ...BB, fontSize:11, color:"#aaa", flexShrink:0, marginTop:1 }}>{r.cd}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── POPUPS ── */}
+      {popup === "all" && <AllCrimesPopup onSelect={open} onClose={() => setPopup(null)} />}
+      {popup === "of"  && <OffenderPopup onClose={() => setPopup(null)} />}
+      {popup === "ar"  && <ArmedRobberyPopup onClose={() => setPopup(null)} />}
+      {popup === "ij"  && <InsideJobPopup onClose={() => setPopup(null)} />}
+      {popup === "fe"  && <FelonyPopup onClose={() => setPopup(null)} />}
+    </div>
+  );
+}
