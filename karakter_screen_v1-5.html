@@ -1,0 +1,1229 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>KARAKTER</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@400;600&family=Cinzel:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;height:100%;overflow:hidden;background:#f5f5f5;font-family:'Bebas Neue',sans-serif;display:flex;flex-direction:column;}
+
+/* HEADER */
+#char-header{height:44px;background:#fff;display:flex;align-items:center;padding:0 12px;gap:10px;border-bottom:1px solid #eee;flex-shrink:0;}
+#back-btn{background:#111;border:none;color:#fff;font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:1px;padding:5px 12px;cursor:pointer;border-radius:3px;}
+
+/* TABS */
+#tab-bar{display:flex;background:#fff;border-bottom:2px solid #eee;flex-shrink:0;}
+.tab{flex:1;padding:8px 4px;text-align:center;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1.5px;color:#aaa;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;}
+.tab.active{color:#111;border-bottom:2px solid #111;}
+
+/* PAGES */
+#tab-pages{flex:1;overflow:hidden;position:relative;}
+.tab-page{position:absolute;inset:0;display:none;overflow-y:auto;overflow-x:hidden;}
+.tab-page.active{display:flex;flex-direction:column;}
+
+/* ── KARAKTER SAYFASI ── */
+#page-karakter{flex-direction:column;}
+
+/* Profil header */
+.prof-header{background:#fff;padding:14px;border-bottom:1px solid #e0e0e0;flex-shrink:0;}
+.prof-top{display:flex;align-items:flex-start;gap:12px;margin-bottom:10px;}
+.prof-avatar{width:58px;height:58px;border-radius:50%;border:2px solid #C9A84C;background:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;position:relative;}
+.prof-avatar img{width:100%;height:100%;object-fit:contain;}
+.prof-rank-badge{position:absolute;bottom:-4px;right:-4px;background:#C9A84C;color:#000;font-size:8px;font-weight:700;padding:2px 4px;border-radius:3px;font-family:'Bebas Neue',sans-serif;}
+.prof-name{font-family:'Bebas Neue',sans-serif;font-size:22px;color:#111;letter-spacing:1px;line-height:1;margin-bottom:3px;}
+.prof-title{font-family:'Cinzel',serif;font-size:10px;color:#C9A84C;letter-spacing:1.5px;margin-bottom:5px;}
+.prof-tags{display:flex;gap:4px;flex-wrap:wrap;}
+.prof-tag{font-size:8px;padding:2px 6px;border-radius:3px;}
+.xp-bar-wrap{margin-top:8px;}
+.xp-bar-label{display:flex;justify-content:space-between;font-size:8px;color:#666;margin-bottom:3px;}
+.xp-bar-bg{height:5px;background:#fff;border:1px solid #f0f0f0;overflow:hidden;}
+.xp-bar-fill{height:100%;background:repeating-linear-gradient(90deg,#a16207 0px,#C9A84C 5px,#ffffff 5px,#ffffff 7px);box-shadow:0 0 6px #C9A84C66;transition:width .4s;}
+
+/* Stats grid */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);background:#fff;border-bottom:1px solid #eee;flex-shrink:0;}
+.stat-cell{padding:8px 4px;text-align:center;}
+.stat-val{font-family:'Bebas Neue',sans-serif;font-size:16px;}
+.stat-lbl{font-size:8px;color:#111;font-weight:600;margin-top:1px;letter-spacing:.5px;}
+
+/* 2-col layout: combat left, items right */
+.two-col{display:flex;gap:8px;padding:8px;flex:1;}
+.col-left{flex:1.2;display:flex;flex-direction:column;gap:6px;}
+.col-right{flex:1;display:flex;flex-direction:column;gap:5px;}
+
+.section-title{font-family:'Oswald',sans-serif;font-size:10px;font-weight:600;letter-spacing:1.5px;color:#111;margin-bottom:4px;}
+.combat-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #f0f0f0;}
+.combat-row:last-child{border:none;}
+.combat-key{font-size:10px;color:#111;font-family:'Oswald',sans-serif;font-weight:600;}
+.combat-val{font-family:'Bebas Neue',sans-serif;font-size:13px;color:#111;}
+
+/* Slot butons */
+.slot-btn{width:100%;display:flex;align-items:center;gap:6px;padding:5px 7px;background:#fff;border:1px solid #e8e8e8;border-radius:8px;cursor:pointer;position:relative;}
+.slot-img{width:32px;height:32px;object-fit:contain;flex-shrink:0;}
+.slot-info{flex:1;text-align:left;}
+.slot-name{font-family:'Bebas Neue',sans-serif;font-size:11px;color:#111;letter-spacing:.5px;}
+.slot-tier{font-family:'Oswald',sans-serif;font-size:8px;font-weight:600;}
+.slot-dot{position:absolute;top:5px;right:5px;width:5px;height:5px;border-radius:50%;}
+
+/* 3D body area */
+.body-area{background:#f0f0f0;border:1px solid #e8e8e8;border-radius:10px;display:flex;align-items:center;justify-content:center;height:100px;margin-bottom:5px;flex-shrink:0;}
+
+/* Actions */
+.actions{display:flex;gap:5px;padding:8px;border-top:1px solid #eee;flex-shrink:0;}
+.action-btn{flex:1;padding:7px 2px;border:none;border-radius:6px;font-family:'Oswald',sans-serif;font-size:9px;font-weight:700;cursor:pointer;letter-spacing:.3px;}
+
+/* ── VILLA / PERSONALS ── */
+.placeholder-page{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:#ccc;}
+.placeholder-page img{width:120px;height:120px;object-fit:contain;opacity:.5;}
+.placeholder-page .ph-lbl{font-size:18px;letter-spacing:3px;color:#bbb;}
+.placeholder-page .ph-sub{font-family:'Oswald',sans-serif;font-size:11px;color:#ddd;letter-spacing:1px;}
+
+/* MODAL */
+#modal-overlay{display:none;position:fixed;inset:0;z-index:600;background:rgba(0,0,0,0.4);align-items:flex-end;justify-content:center;}
+#modal-overlay.open{display:flex;}
+#modal-box{width:100%;max-width:480px;background:#fff;border-radius:14px 14px 0 0;max-height:72vh;display:flex;flex-direction:column;}
+#modal-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px 8px;border-bottom:1px solid #e8e8e8;}
+#modal-close{border:none;background:none;font-size:22px;cursor:pointer;color:#aaa;}
+#modal-tiers{display:flex;gap:4px;padding:7px 16px;border-bottom:1px solid #f0f0f0;flex-wrap:wrap;}
+#modal-list{overflow-y:auto;flex:1;padding:6px 16px 12px;}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div id="char-header">
+  <button id="back-btn">◀ GERİ</button>
+  <span style="font-size:16px;letter-spacing:3px;color:#111;">KARAKTER</span>
+</div>
+
+<!-- TABS -->
+<div id="tab-bar">
+  <div class="tab active" onclick="switchTab('karakter')">KARAKTER</div>
+  <div class="tab" onclick="switchTab('villa')">VILLA</div>
+  <div class="tab" onclick="switchTab('personals')">PERSONALS</div>
+  <div class="tab" onclick="switchTab('garaj')">GARAJ</div>
+</div>
+
+<!-- PAGES -->
+<div id="tab-pages">
+
+  <!-- ── KARAKTER ── -->
+  <div class="tab-page active" id="page-karakter">
+
+    <!-- Profil header -->
+    <div class="prof-header">
+      <div class="prof-top">
+        <div class="prof-avatar" style="position:relative;">
+          <img src="https://mericaltinors1983-max.github.io/hustler/rank_animal_7.png" onerror="this.outerHTML='🦅'">
+          <div class="prof-rank-badge">R7</div>
+        </div>
+        <div style="flex:1;">
+          <div class="prof-name">SHADOW_99</div>
+          <div class="prof-title">ENFORCER</div>
+          <!-- Butonlar ismin altında -->
+          <div style="display:flex;gap:4px;margin-top:6px;flex-wrap:wrap;">
+            <button style="padding:4px 8px;border:1px solid #2a2a4a;background:#1a1a2a;color:#a78bfa;border-radius:5px;font-family:'Oswald',sans-serif;font-size:9px;font-weight:700;cursor:pointer;">💬 MESAJ</button>
+            <button style="padding:4px 8px;border:1px solid #4a2a1a;background:#2a1a0a;color:#f97316;border-radius:5px;font-family:'Oswald',sans-serif;font-size:9px;font-weight:700;cursor:pointer;">🎯 HİTLİST</button>
+            <button onclick="addFriend()" style="padding:4px 8px;border:1px solid #C9A84C66;background:#C9A84C22;color:#C9A84C;border-radius:5px;font-family:'Oswald',sans-serif;font-size:9px;font-weight:700;cursor:pointer;">➕ ARKADAŞ</button>
+          </div>
+          <div class="prof-tags" style="margin-top:5px;">
+            <span class="prof-tag" style="background:#1e2a1e;color:#4ade80;border:1px solid #2a4a2a;">📍 İSTANBUL</span>
+            <span class="prof-tag" style="background:#1e1a2a;color:#a78bfa;border:1px solid #3a2a5a;">👥 CORLEONES</span>
+            <span class="prof-tag" style="background:#2a1a0a;color:#f97316;border:1px solid #5a3a1a;">⭐ VIP 3</span>
+            <span class="prof-tag" id="es-tag" style="background:#2a1a2a;color:#f472b6;border:1px solid #5a2a4a;">💍 SCARFACE_77</span>
+          </div>
+        </div>
+        <button onclick="openProfileShare()" style="background:#C9A84C22;border:1px solid #C9A84C66;color:#C9A84C;width:28px;height:28px;border-radius:6px;font-size:13px;cursor:pointer;flex-shrink:0;">↗</button>
+      </div>
+      <div class="xp-bar-wrap">
+        <div class="xp-bar-label"><span style="color:#888;">XP — LVL 7</span><span style="color:#888;">62% → LVL 8</span></div>
+        <div class="xp-bar-bg"><div class="xp-bar-fill" style="width:62%;"></div></div>
+      </div>
+    </div>
+
+    <!-- Stats grid -->
+    <div class="stats-grid">
+      <div class="stat-cell"><div class="stat-val" style="color:#ef4444;">247</div><div class="stat-lbl">KILLS</div></div>
+      <div class="stat-cell"><div class="stat-val" style="color:#4ade80;">$2.4M</div><div class="stat-lbl">TOPLAM KAZANÇ</div></div>
+      <div class="stat-cell"><div class="stat-val" style="color:#C9A84C;">2.65</div><div class="stat-lbl">KS</div></div>
+      <div class="stat-cell"><div class="stat-val" style="color:#a78bfa;">18</div><div class="stat-lbl">HEISTS</div></div>
+    </div>
+
+    <!-- 3 kolon: sol=3D+stats(dar), orta=itemler, sağ=bodyguardlar -->
+    <div style="display:flex;gap:6px;padding:8px;min-height:0;">
+
+      <!-- Sol: 3D + stats (dar) -->
+      <div style="flex:1;display:flex;flex-direction:column;gap:4px;align-items:center;">
+        <div id="body-placeholder" style="width:100%;height:110px;background:#f0f0f0;border:1px solid #e8e8e8;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;">
+          <img src="https://mericaltinors1983-max.github.io/hustler/IMG_20260326_111405_402.jpg" style="height:100%;width:100%;object-fit:contain;" onerror="this.outerHTML='<div style=text-align:center;color:#ccc><div style=font-size:22px;opacity:.35>🧍</div></div>'">
+        </div>
+        <div style="width:100%;background:#fff;border-radius:6px;border:1px solid #e8e8e8;padding:3px 6px;">
+          <div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #f5f5f5;"><span style="font-size:8px;color:#111;font-weight:600;">KS</span><span style="font-family:'Bebas Neue',sans-serif;font-size:9px;color:#C9A84C;" id="stat-ks">2.65</span></div>
+          <div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #f5f5f5;"><span style="font-size:8px;color:#111;font-weight:600;">HP</span><span style="font-family:'Bebas Neue',sans-serif;font-size:9px;color:#4ade80;">85/100</span></div>
+          <div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #f5f5f5;"><span style="font-size:8px;color:#111;font-weight:600;">DEF</span><span style="font-family:'Bebas Neue',sans-serif;font-size:9px;color:#4ade80;" id="stat-def">0</div>
+          <div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #f5f5f5;"><span style="font-size:8px;color:#111;font-weight:600;">AİLE</span><span style="font-family:'Bebas Neue',sans-serif;font-size:8px;color:#a78bfa;">CORL.</span></div>
+          <div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #f5f5f5;" id="es-row"><span style="font-size:8px;color:#111;font-weight:600;">EŞ</span><span style="font-family:'Bebas Neue',sans-serif;font-size:8px;color:#f472b6;">SCARFACE</span></div>
+          <div style="display:flex;justify-content:space-between;padding:3px 0;"><span style="font-size:8px;color:#111;font-weight:600;">GÜN</span><span style="font-family:'Bebas Neue',sans-serif;font-size:9px;color:#888;">247</span></div>
+        </div>
+        <div style="width:100%;">
+          <div style="font-size:8px;font-weight:600;letter-spacing:1px;color:#111;font-family:'Oswald',sans-serif;margin-bottom:3px;">VEHICLES</div>
+          <div style="display:flex;gap:3px;">
+            <button style="flex:1;padding:4px 1px;border:1px solid #e8e8e8;border-radius:6px;background:#fafafa;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:1px;"><span style="font-size:11px;">🚗</span><span style="font-size:5px;color:#bbb;font-family:'Oswald',sans-serif;">CAR</span></button>
+            <button style="flex:1;padding:4px 1px;border:1px solid #e8e8e8;border-radius:6px;background:#fafafa;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:1px;"><span style="font-size:11px;">🚢</span><span style="font-size:5px;color:#bbb;font-family:'Oswald',sans-serif;">SHIP</span></button>
+            <button style="flex:1;padding:4px 1px;border:1px solid #e8e8e8;border-radius:6px;background:#fafafa;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:1px;"><span style="font-size:11px;">✈️</span><span style="font-size:5px;color:#bbb;font-family:'Oswald',sans-serif;">PLANE</span></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Orta: itemler -->
+      <div style="flex:1;display:flex;flex-direction:column;gap:4px;min-width:0;">
+        <div style="font-size:8px;font-weight:600;letter-spacing:1px;color:#111;font-family:'Oswald',sans-serif;">EQUIPPED</div>
+        <button class="slot-btn" id="slot-suit" onclick="openModal('suit')">
+          <img class="slot-img" src="https://files.catbox.moe/nj0rtb.png" onerror="this.style.display='none'">
+          <div class="slot-info"><div class="slot-name">SUIT</div><div class="slot-tier" style="color:#888;">T1 · NORMAL</div></div>
+          <div class="slot-dot" style="background:#888;"></div>
+        </button>
+        <button class="slot-btn" id="slot-weapon" onclick="openModal('weapon')">
+          <img class="slot-img" src="https://files.catbox.moe/rdeeuu.png" onerror="this.style.display='none'">
+          <div class="slot-info"><div class="slot-name">WEAPON</div><div class="slot-tier" style="color:#888;">T1 · NORMAL</div></div>
+          <div class="slot-dot" style="background:#888;"></div>
+        </button>
+        <button class="slot-btn" id="slot-bag" onclick="openModal('bag')">
+          <img class="slot-img" src="https://files.catbox.moe/l86b3b.png" onerror="this.style.display='none'">
+          <div class="slot-info"><div class="slot-name">BAG</div><div class="slot-tier" style="color:#888;">T1 · NORMAL</div></div>
+          <div class="slot-dot" style="background:#888;"></div>
+        </button>
+        <button class="slot-btn" id="slot-necklace" onclick="openModal('necklace')">
+          <img class="slot-img" src="https://files.catbox.moe/y6evoh.png" onerror="this.style.display='none'">
+          <div class="slot-info"><div class="slot-name">NECKLACE</div><div class="slot-tier" style="color:#888;">T1 · NORMAL</div></div>
+          <div class="slot-dot" style="background:#888;"></div>
+        </button>
+        <button class="slot-btn" id="slot-ring" onclick="openModal('ring')">
+          <img class="slot-img" src="https://files.catbox.moe/ky2833.png" onerror="this.style.display='none'">
+          <div class="slot-info"><div class="slot-name">RING</div><div class="slot-tier" style="color:#888;">T1 · NORMAL</div></div>
+          <div class="slot-dot" style="background:#888;"></div>
+        </button>
+        <button class="slot-btn" id="slot-yelek" onclick="openModal('yelek')">
+          <img class="slot-img" src="https://mericaltinors1983-max.github.io/hustler/yelek_t1_base.png" onerror="this.style.display='none'">
+          <div class="slot-info"><div class="slot-name">ÇELİK YELEK</div><div class="slot-tier" style="color:#888;">T1 · NORMAL</div></div>
+          <div class="slot-dot" style="background:#888;"></div>
+        </button>
+      </div>
+
+      <!-- Sağ: Bodyguardlar -->
+      <div style="flex:1;display:flex;flex-direction:column;gap:4px;min-width:0;">
+        <div style="font-size:8px;font-weight:600;letter-spacing:1px;color:#111;font-family:'Oswald',sans-serif;">BODYGUARDS</div>
+        <button class="slot-btn" id="slot-bg1" onclick="openBGModal(1)" style="padding:4px 5px;">
+          <div style="width:22px;height:22px;border-radius:50%;background:#f5f5f5;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px;" id="bg1-ico">🛡️</div>
+          <div style="flex:1;min-width:0;"><div style="font-family:'Bebas Neue',sans-serif;font-size:8px;color:#aaa;white-space:nowrap;overflow:hidden;">BG 1</div><div style="font-size:6px;color:#ccc;font-family:'Oswald',sans-serif;" id="bg1-def">— DEF</div></div>
+        </button>
+        <button class="slot-btn" id="slot-bg2" onclick="openBGModal(2)" style="padding:4px 5px;">
+          <div style="width:22px;height:22px;border-radius:50%;background:#f5f5f5;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px;" id="bg2-ico">🛡️</div>
+          <div style="flex:1;min-width:0;"><div style="font-family:'Bebas Neue',sans-serif;font-size:8px;color:#aaa;white-space:nowrap;overflow:hidden;">BG 2</div><div style="font-size:6px;color:#ccc;font-family:'Oswald',sans-serif;" id="bg2-def">— DEF</div></div>
+        </button>
+        <button class="slot-btn" id="slot-bg3" onclick="openBGModal(3)" style="padding:4px 5px;">
+          <div style="width:22px;height:22px;border-radius:50%;background:#f5f5f5;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px;" id="bg3-ico">🛡️</div>
+          <div style="flex:1;min-width:0;"><div style="font-family:'Bebas Neue',sans-serif;font-size:8px;color:#aaa;white-space:nowrap;overflow:hidden;">BG 3</div><div style="font-size:6px;color:#ccc;font-family:'Oswald',sans-serif;" id="bg3-def">— DEF</div></div>
+        </button>
+        <button class="slot-btn" id="slot-bg4" onclick="openBGModal(4)" style="padding:4px 5px;">
+          <div style="width:22px;height:22px;border-radius:50%;background:#f5f5f5;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px;" id="bg4-ico">🛡️</div>
+          <div style="flex:1;min-width:0;"><div style="font-family:'Bebas Neue',sans-serif;font-size:8px;color:#aaa;white-space:nowrap;overflow:hidden;">BG 4</div><div style="font-size:6px;color:#ccc;font-family:'Oswald',sans-serif;" id="bg4-def">— DEF</div></div>
+        </button>
+        <button class="slot-btn" id="slot-bg5" onclick="openBGModal(5)" style="padding:4px 5px;">
+          <div style="width:22px;height:22px;border-radius:50%;background:#f5f5f5;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px;" id="bg5-ico">🛡️</div>
+          <div style="flex:1;min-width:0;"><div style="font-family:'Bebas Neue',sans-serif;font-size:8px;color:#aaa;white-space:nowrap;overflow:hidden;">BG 5</div><div style="font-size:6px;color:#ccc;font-family:'Oswald',sans-serif;" id="bg5-def">— DEF</div></div>
+        </button>
+        <!-- Toplam DEF bonusu -->
+        <div style="background:#fff;border:1px solid #e8e8e8;border-radius:6px;padding:4px 5px;text-align:center;">
+          <div style="font-size:6px;color:#aaa;font-family:'Oswald',sans-serif;">BG DEF BONUS</div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:11px;color:#4ade80;" id="bg-total-def">+0</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions kaldırıldı, yukarı taşındı -->
+
+    <!-- ARKADAŞ LİSTESİ -->
+    <div style="border-top:1px solid #eee;flex-shrink:0;">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 12px 4px;">
+        <span style="font-family:'Oswald',sans-serif;font-size:9px;font-weight:600;letter-spacing:1.5px;color:#aaa;">ARKADAŞLAR</span>
+        <span style="font-family:'Oswald',sans-serif;font-size:9px;color:#aaa;" id="friend-count">0</span>
+      </div>
+      <div id="friends-list" style="display:flex;gap:6px;padding:4px 12px 8px;overflow-x:auto;scrollbar-width:none;min-height:54px;align-items:center;">
+        <div style="text-align:center;color:#ddd;width:100%;font-family:'Oswald',sans-serif;font-size:10px;" id="friends-empty">Henüz arkadaş yok</div>
+      </div>
+    </div>
+
+  </div><!-- /page-karakter -->
+
+  <!-- ── VILLA ── -->
+  <div class="tab-page" id="page-villa">
+    <div style="padding:10px;display:flex;flex-direction:column;gap:8px;overflow-y:auto;" id="villa-list">
+      <div class="section-title" style="padding:0 2px;">OWNED PROPERTIES</div>
+      <div id="villa-cards" style="display:flex;flex-direction:column;gap:6px;"></div>
+    </div>
+  </div>
+
+  <!-- ── PERSONALS ── -->
+  <div class="tab-page" id="page-personals">
+    <div style="padding:10px;display:flex;flex-direction:column;gap:8px;overflow-y:auto;">
+      <div class="section-title" style="padding:0 2px;">TITLES & ROLES</div>
+      <div id="personals-cards" style="display:flex;flex-direction:column;gap:6px;"></div>
+    </div>
+  </div>
+  <!-- ── GARAJ ── -->
+  <div class="tab-page" id="page-garaj">
+    <div style="padding:10px;display:flex;flex-direction:column;gap:8px;overflow-y:auto;height:100%;">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:0 2px;">
+        <div class="section-title">GARAJ</div>
+        <div id="garaj-count" style="font-family:'Oswald',sans-serif;font-size:9px;font-weight:600;color:#aaa;"></div>
+      </div>
+      <div id="garaj-cards" style="display:flex;flex-direction:column;gap:6px;"></div>
+    </div>
+  </div>
+
+</div><!-- /tab-pages -->
+
+<!-- MODAL -->
+<div id="modal-overlay" onclick="closeModal()">
+  <div id="modal-box" onclick="event.stopPropagation()">
+    <div id="modal-header">
+      <span id="modal-title" style="font-size:12px;font-weight:bold;letter-spacing:2px;color:#111;font-family:'Bebas Neue',sans-serif;">SELECT</span>
+      <button id="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div id="modal-tiers"></div>
+    <div id="modal-list"></div>
+  </div>
+</div>
+
+<script>
+// ── BACK ─────────────────────────────────────────────────
+document.getElementById('back-btn').onclick = function() {
+  if (window.parent && window.parent.closeKarakter) window.parent.closeKarakter();
+  else if (window.onBack) window.onBack();
+  else if (document.referrer) history.back();
+};
+
+// ── TABS ─────────────────────────────────────────────────
+function switchTab(id) {
+  document.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('active'); });
+  document.querySelectorAll('.tab-page').forEach(function(p){ p.classList.remove('active'); });
+  document.querySelector('.tab[onclick*="'+id+'"]').classList.add('active');
+  document.getElementById('page-'+id).classList.add('active');
+}
+
+// ── ITEM DATA ─────────────────────────────────────────────
+var ITEM_URLS = {
+  suit:    {t1:'https://files.catbox.moe/nj0rtb.png',t2:'https://files.catbox.moe/vdq651.png',t3:'https://files.catbox.moe/fr4mtp.png',t4:'https://files.catbox.moe/wgis36.png',t5:'https://files.catbox.moe/f5qq4a.png'},
+  weapon:  {t1:'https://files.catbox.moe/rdeeuu.png',t2:'https://files.catbox.moe/ubd2xj.png',t3:'https://files.catbox.moe/7oh98m.png',t4:'https://files.catbox.moe/pze7lj.png',t5:'https://files.catbox.moe/ghkckw.png'},
+  bag:     {t1:'https://files.catbox.moe/l86b3b.png',t2:'https://files.catbox.moe/9v0zx3.png',t3:'https://files.catbox.moe/b3ya5s.png',t4:'https://files.catbox.moe/srfohq.png',t5:'https://files.catbox.moe/liqciq.png'},
+  necklace:{t1:'https://files.catbox.moe/y6evoh.png',t2:'https://files.catbox.moe/mom79z.png',t3:'https://files.catbox.moe/iodu7t.png',t4:'https://files.catbox.moe/ypj8ok.png',t5:'https://files.catbox.moe/xveooz.png'},
+  ring:    {t1:'https://files.catbox.moe/ky2833.png',t2:'https://files.catbox.moe/ky2833.png',t3:'https://files.catbox.moe/ky2833.png',t4:'https://files.catbox.moe/ky2833.png',t5:'https://files.catbox.moe/ky2833.png'},
+  yelek:   {t1:'https://mericaltinors1983-max.github.io/hustler/yelek_t1_base.png',t2:'https://mericaltinors1983-max.github.io/hustler/yelek_t2_base.png',t3:'https://mericaltinors1983-max.github.io/hustler/yelek_t3_base.png',t4:'https://mericaltinors1983-max.github.io/hustler/yelek_t4_base.png',t5:'https://mericaltinors1983-max.github.io/hustler/yelek_t5_base.png'},
+};
+var ITEM_LIST = {
+  silah:[
+  {id:'t1_01',t:1,name:'Street Piece',img:'https://mericaltinors1983-max.github.io/hustler/silah_t1_01.png',ks:0.0,def:0,slots:0},
+  {id:'t1_02',t:1,name:'Saturday Special',img:'https://mericaltinors1983-max.github.io/hustler/silah_t1_02.png',ks:0.0,def:0,slots:0},
+  {id:'t1_03',t:1,name:'Old Flintlock',img:'https://mericaltinors1983-max.github.io/hustler/silah_t1_03.png',ks:0.0,def:0,slots:0},
+  {id:'t1_04',t:1,name:'Rusty Glock',img:'https://mericaltinors1983-max.github.io/hustler/silah_t1_04.png',ks:0.0,def:0,slots:0},
+  {id:'t1_05',t:1,name:'Ghost Glock',img:'https://mericaltinors1983-max.github.io/hustler/silah_t1_05.png',ks:0.0,def:0,slots:0},
+  {id:'t1_06',t:1,name:'Red Devil',img:'https://mericaltinors1983-max.github.io/hustler/silah_t1_06.png',ks:0.0,def:0,slots:0},
+  {id:'t1_07',t:1,name:'Street Hawk',img:'https://mericaltinors1983-max.github.io/hustler/silah_t1_07.png',ks:0.0,def:0,slots:0},
+  {id:'t1_08',t:1,name:'Purple Piece',img:'https://mericaltinors1983-max.github.io/hustler/silah_t1_08.png',ks:0.0,def:0,slots:0},
+  {id:'t1_09',t:1,name:'Phantom',img:'https://mericaltinors1983-max.github.io/hustler/silah_t1_09.png',ks:0.0,def:0,slots:0},
+  {id:'t1_10',t:1,name:'Pink Slip',img:'https://mericaltinors1983-max.github.io/hustler/silah_t1_10.png',ks:0.0,def:0,slots:0},
+  {id:'t2_11',t:2,name:'Tommy Gun',img:'https://mericaltinors1983-max.github.io/hustler/silah_t2_01.png',ks:0.0,def:0,slots:0},
+  {id:'t2_12',t:2,name:'Mini Uzi',img:'https://mericaltinors1983-max.github.io/hustler/silah_t2_02.png',ks:0.0,def:0,slots:0},
+  {id:'t2_13',t:2,name:'Tac Pistol',img:'https://mericaltinors1983-max.github.io/hustler/silah_t2_03.png',ks:0.0,def:0,slots:0},
+  {id:'t2_14',t:2,name:'Street Uzi',img:'https://mericaltinors1983-max.github.io/hustler/silah_t2_04.png',ks:0.0,def:0,slots:0},
+  {id:'t2_15',t:2,name:'The Revolver',img:'https://mericaltinors1983-max.github.io/hustler/silah_t2_05.png',ks:0.0,def:0,slots:0},
+  {id:'t2_16',t:2,name:'Laser Tag',img:'https://mericaltinors1983-max.github.io/hustler/silah_t2_06.png',ks:0.0,def:0,slots:0},
+  {id:'t2_17',t:2,name:'Tac SMG',img:'https://mericaltinors1983-max.github.io/hustler/silah_t2_07.png',ks:0.0,def:0,slots:0},
+  {id:'t2_18',t:2,name:'Shadow SMG',img:'https://mericaltinors1983-max.github.io/hustler/silah_t2_08.png',ks:0.0,def:0,slots:0},
+  {id:'t2_19',t:2,name:'Six Shooter',img:'https://mericaltinors1983-max.github.io/hustler/silah_t2_09.png',ks:0.0,def:0,slots:0},
+  {id:'t2_20',t:2,name:'Night Piece',img:'https://mericaltinors1983-max.github.io/hustler/silah_t2_10.png',ks:0.0,def:0,slots:0},
+  {id:'t3_21',t:3,name:'Desert Eagle',img:'https://mericaltinors1983-max.github.io/hustler/silah_t3_01.png',ks:0.0,def:0,slots:0},
+  {id:'t3_22',t:3,name:'P90',img:'https://mericaltinors1983-max.github.io/hustler/silah_t3_02.png',ks:0.0,def:0,slots:0},
+  {id:'t3_23',t:3,name:'Black Hawk',img:'https://mericaltinors1983-max.github.io/hustler/silah_t3_03.png',ks:0.0,def:0,slots:0},
+  {id:'t3_24',t:3,name:'MP5',img:'https://mericaltinors1983-max.github.io/hustler/silah_t3_04.png',ks:0.0,def:0,slots:0},
+  {id:'t3_25',t:3,name:'Combat Hawk',img:'https://mericaltinors1983-max.github.io/hustler/silah_t3_05.png',ks:0.0,def:0,slots:0},
+  {id:'t3_26',t:3,name:'Golden AK',img:'https://mericaltinors1983-max.github.io/hustler/silah_t3_06.png',ks:0.0,def:0,slots:0},
+  {id:'t3_27',t:3,name:'Street AK',img:'https://mericaltinors1983-max.github.io/hustler/silah_t3_07.png',ks:0.0,def:0,slots:0},
+  {id:'t3_28',t:3,name:'Old Barrel',img:'https://mericaltinors1983-max.github.io/hustler/silah_t3_08.png',ks:0.0,def:0,slots:0},
+  {id:'t3_29',t:3,name:'Jungle Bull',img:'https://mericaltinors1983-max.github.io/hustler/silah_t3_09.png',ks:0.0,def:0,slots:0},
+  {id:'t3_30',t:3,name:'Shadow AK',img:'https://mericaltinors1983-max.github.io/hustler/silah_t3_10.png',ks:0.0,def:0,slots:0},
+  {id:'t4_31',t:4,name:'Camo AR',img:'https://mericaltinors1983-max.github.io/hustler/silah_t4_01.png',ks:0.0,def:0,slots:0},
+  {id:'t4_32',t:4,name:'Black Ops M4',img:'https://mericaltinors1983-max.github.io/hustler/silah_t4_02.png',ks:0.0,def:0,slots:0},
+  {id:'t4_33',t:4,name:'Ghost PDW',img:'https://mericaltinors1983-max.github.io/hustler/silah_t4_03.png',ks:0.0,def:0,slots:0},
+  {id:'t4_34',t:4,name:'Bolt Sniper',img:'https://mericaltinors1983-max.github.io/hustler/silah_t4_04.png',ks:0.0,def:0,slots:0},
+  {id:'t4_35',t:4,name:'Bullpup Elite',img:'https://mericaltinors1983-max.github.io/hustler/silah_t4_05.png',ks:0.0,def:0,slots:0},
+  {id:'t4_36',t:4,name:'Iron Fist',img:'https://mericaltinors1983-max.github.io/hustler/silah_t4_06.png',ks:0.0,def:0,slots:0},
+  {id:'t4_37',t:4,name:'Cyan Ghost',img:'https://mericaltinors1983-max.github.io/hustler/silah_t4_07.png',ks:0.0,def:0,slots:0},
+  {id:'t4_38',t:4,name:'Tactical X',img:'https://mericaltinors1983-max.github.io/hustler/silah_t4_08.png',ks:0.0,def:0,slots:0},
+  {id:'t4_39',t:4,name:'Iron Hawk',img:'https://mericaltinors1983-max.github.io/hustler/silah_t4_09.png',ks:0.0,def:0,slots:0},
+  {id:'t4_40',t:4,name:'Iron Ghost',img:'https://mericaltinors1983-max.github.io/hustler/silah_t4_10.png',ks:0.0,def:0,slots:0},
+  {id:'t5_41',t:5,name:'War Machine',img:'https://mericaltinors1983-max.github.io/hustler/silah_t5_01.png',ks:0.0,def:0,slots:0},
+  {id:'t5_42',t:5,name:'The Reaper',img:'https://mericaltinors1983-max.github.io/hustler/silah_t5_02.png',ks:0.0,def:0,slots:0},
+  {id:'t5_43',t:5,name:'Ghost Shot',img:'https://mericaltinors1983-max.github.io/hustler/silah_t5_03.png',ks:0.0,def:0,slots:0},
+  {id:'t5_44',t:5,name:'Black Widow',img:'https://mericaltinors1983-max.github.io/hustler/silah_t5_04.png',ks:0.0,def:0,slots:0},
+  {id:'t5_45',t:5,name:'Phantom Sniper',img:'https://mericaltinors1983-max.github.io/hustler/silah_t5_05.png',ks:0.0,def:0,slots:0},
+  {id:'t5_46',t:5,name:'Death Stalker',img:'https://mericaltinors1983-max.github.io/hustler/silah_t5_06.png',ks:0.0,def:0,slots:0},
+  {id:'t5_47',t:5,name:'Blue Scope',img:'https://mericaltinors1983-max.github.io/hustler/silah_t5_07.png',ks:0.0,def:0,slots:0},
+  {id:'t5_48',t:5,name:'Phantom Bull',img:'https://mericaltinors1983-max.github.io/hustler/silah_t5_08.png',ks:0.0,def:0,slots:0},
+  {id:'t5_49',t:5,name:'Blue M16',img:'https://mericaltinors1983-max.github.io/hustler/silah_t5_09.png',ks:0.0,def:0,slots:0},
+  {id:'t5_50',t:5,name:'Blue AK',img:'https://mericaltinors1983-max.github.io/hustler/silah_t5_10.png',ks:0.0,def:0,slots:0}
+  ],
+  ring:[
+  {id:'t1_01',t:1,name:'Street Ring',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:0.3,def:0,slots:0},
+  {id:'t1_02',t:1,name:'Alley Band',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:0.5,def:0,slots:0},
+  {id:'t1_03',t:1,name:'Iron Ring',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:0.7,def:0,slots:0},
+  {id:'t1_04',t:1,name:'Copper Band',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:0.9,def:0,slots:0},
+  {id:'t1_05',t:1,name:'Rusty Ring',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:1.1,def:0,slots:0},
+  {id:'t1_06',t:1,name:'Wire Band',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:1.3,def:0,slots:0},
+  {id:'t1_07',t:1,name:'Pawn Ring',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:1.5,def:0,slots:0},
+  {id:'t1_08',t:1,name:'Brass Band',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:1.7,def:0,slots:0},
+  {id:'t1_09',t:1,name:'Back Alley Ring',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:1.9,def:0,slots:0},
+  {id:'t1_10',t:1,name:'Tin Band',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:2.3,def:0,slots:0},
+  {id:'t2_11',t:2,name:'Silver Hustle Ring',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:1.2,def:0,slots:0},
+  {id:'t2_12',t:2,name:'Night Band',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:1.4,def:0,slots:0},
+  {id:'t2_13',t:2,name:'Shadow Ring',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:1.6,def:0,slots:0},
+  {id:'t2_14',t:2,name:'Racket Band',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:1.8,def:0,slots:0},
+  {id:'t2_15',t:2,name:'Smuggler Ring',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:2.0,def:0,slots:0},
+  {id:'t2_16',t:2,name:'Dark Band',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:2.2,def:0,slots:0},
+  {id:'t2_17',t:2,name:'Mob Ring',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:2.4,def:0,slots:0},
+  {id:'t2_18',t:2,name:'Steel Band',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:2.6,def:0,slots:0},
+  {id:'t2_19',t:2,name:'Runner Ring',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:2.8,def:0,slots:0},
+  {id:'t2_20',t:2,name:'Midnight Band',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:3.0,def:0,slots:0},
+  {id:'t3_21',t:3,name:'Enforcer Ring',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:2.0,def:0,slots:0},
+  {id:'t3_22',t:3,name:'Blood Band',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:2.2,def:0,slots:0},
+  {id:'t3_23',t:3,name:'Chrome Ring',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:2.4,def:0,slots:0},
+  {id:'t3_24',t:3,name:'Syndicate Band',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:2.6,def:0,slots:0},
+  {id:'t3_25',t:3,name:'Hitman Ring',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:2.8,def:0,slots:0},
+  {id:'t3_26',t:3,name:'Iron Crown Band',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:3.0,def:0,slots:0},
+  {id:'t3_27',t:3,name:'Dark Syndicate Ring',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:3.2,def:0,slots:0},
+  {id:'t3_28',t:3,name:'Operator Band',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:3.4,def:0,slots:0},
+  {id:'t3_29',t:3,name:'Phantom Ring',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:3.6,def:0,slots:0},
+  {id:'t3_30',t:3,name:'Steel Empire Band',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:3.8,def:0,slots:0},
+  {id:'t4_31',t:4,name:'Underboss Ring',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:2.8,def:0,slots:0},
+  {id:'t4_32',t:4,name:'Black Widow Band',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:3.0,def:0,slots:0},
+  {id:'t4_33',t:4,name:'Crimson Ring',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:3.2,def:0,slots:0},
+  {id:'t4_34',t:4,name:'Death Dealer Band',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:3.4,def:0,slots:0},
+  {id:'t4_35',t:4,name:'Empire Ring',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:3.6,def:0,slots:0},
+  {id:'t4_36',t:4,name:'Shadow Crown Band',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:3.8,def:0,slots:0},
+  {id:'t4_37',t:4,name:'Kingpin Ring',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:4.0,def:0,slots:0},
+  {id:'t4_38',t:4,name:'Blood Covenant Band',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:4.2,def:0,slots:0},
+  {id:'t4_39',t:4,name:'Dark Dynasty Ring',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:4.4,def:0,slots:0},
+  {id:'t4_40',t:4,name:'Executioner Band',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:4.8,def:0,slots:0},
+  {id:'t5_41',t:5,name:'Godfather Ring',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:4.0,def:0,slots:0},
+  {id:'t5_42',t:5,name:'Cosa Nostra Band',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:4.2,def:0,slots:0},
+  {id:'t5_43',t:5,name:'Black Hand Ring',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:4.4,def:0,slots:0},
+  {id:'t5_44',t:5,name:'Omerta Band',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:4.6,def:0,slots:0},
+  {id:'t5_45',t:5,name:'La Famiglia Ring',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:4.8,def:0,slots:0},
+  {id:'t5_46',t:5,name:'The Don Band',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:5.0,def:0,slots:0},
+  {id:'t5_47',t:5,name:'Corleone Ring',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:5.2,def:0,slots:0},
+  {id:'t5_48',t:5,name:'Il Capo Band',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:5.4,def:0,slots:0},
+  {id:'t5_49',t:5,name:'Commission Ring',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:5.6,def:0,slots:0},
+  {id:'t5_50',t:5,name:'The Signet',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:5.5,def:0,slots:0},
+  {id:'t1_51',t:1,name:'Street Ring',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:0.3,def:0,slots:0},
+  {id:'t1_52',t:1,name:'Alley Band',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:0.5,def:0,slots:0},
+  {id:'t1_53',t:1,name:'Iron Ring',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:0.7,def:0,slots:0},
+  {id:'t1_54',t:1,name:'Copper Band',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:0.9,def:0,slots:0},
+  {id:'t1_55',t:1,name:'Rusty Ring',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:1.1,def:0,slots:0},
+  {id:'t1_56',t:1,name:'Wire Band',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:1.3,def:0,slots:0},
+  {id:'t1_57',t:1,name:'Pawn Ring',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:1.5,def:0,slots:0},
+  {id:'t1_58',t:1,name:'Brass Band',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:1.7,def:0,slots:0},
+  {id:'t1_59',t:1,name:'Back Alley Ring',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:1.9,def:0,slots:0},
+  {id:'t1_60',t:1,name:'Tin Band',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:2.3,def:0,slots:0},
+  {id:'t2_61',t:2,name:'Silver Hustle Ring',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:1.2,def:0,slots:0},
+  {id:'t2_62',t:2,name:'Night Band',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:1.4,def:0,slots:0},
+  {id:'t2_63',t:2,name:'Shadow Ring',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:1.6,def:0,slots:0},
+  {id:'t2_64',t:2,name:'Racket Band',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:1.8,def:0,slots:0},
+  {id:'t2_65',t:2,name:'Smuggler Ring',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:2.0,def:0,slots:0},
+  {id:'t2_66',t:2,name:'Dark Band',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:2.2,def:0,slots:0},
+  {id:'t2_67',t:2,name:'Mob Ring',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:2.4,def:0,slots:0},
+  {id:'t2_68',t:2,name:'Steel Band',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:2.6,def:0,slots:0},
+  {id:'t2_69',t:2,name:'Runner Ring',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:2.8,def:0,slots:0},
+  {id:'t2_70',t:2,name:'Midnight Band',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:3.0,def:0,slots:0},
+  {id:'t3_71',t:3,name:'Enforcer Ring',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:2.0,def:0,slots:0},
+  {id:'t3_72',t:3,name:'Blood Band',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:2.2,def:0,slots:0},
+  {id:'t3_73',t:3,name:'Chrome Ring',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:2.4,def:0,slots:0},
+  {id:'t3_74',t:3,name:'Syndicate Band',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:2.6,def:0,slots:0},
+  {id:'t3_75',t:3,name:'Hitman Ring',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:2.8,def:0,slots:0},
+  {id:'t3_76',t:3,name:'Iron Crown Band',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:3.0,def:0,slots:0},
+  {id:'t3_77',t:3,name:'Dark Syndicate Ring',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:3.2,def:0,slots:0},
+  {id:'t3_78',t:3,name:'Operator Band',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:3.4,def:0,slots:0},
+  {id:'t3_79',t:3,name:'Phantom Ring',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:3.6,def:0,slots:0},
+  {id:'t3_80',t:3,name:'Steel Empire Band',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:3.8,def:0,slots:0},
+  {id:'t4_81',t:4,name:'Underboss Ring',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:2.8,def:0,slots:0},
+  {id:'t4_82',t:4,name:'Black Widow Band',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:3.0,def:0,slots:0},
+  {id:'t4_83',t:4,name:'Crimson Ring',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:3.2,def:0,slots:0},
+  {id:'t4_84',t:4,name:'Death Dealer Band',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:3.4,def:0,slots:0},
+  {id:'t4_85',t:4,name:'Empire Ring',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:3.6,def:0,slots:0},
+  {id:'t4_86',t:4,name:'Shadow Crown Band',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:3.8,def:0,slots:0},
+  {id:'t4_87',t:4,name:'Kingpin Ring',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:4.0,def:0,slots:0},
+  {id:'t4_88',t:4,name:'Blood Covenant Band',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:4.2,def:0,slots:0},
+  {id:'t4_89',t:4,name:'Dark Dynasty Ring',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:4.4,def:0,slots:0},
+  {id:'t4_90',t:4,name:'Executioner Band',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:4.8,def:0,slots:0},
+  {id:'t5_91',t:5,name:'Godfather Ring',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:4.0,def:0,slots:0},
+  {id:'t5_92',t:5,name:'Cosa Nostra Band',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:4.2,def:0,slots:0},
+  {id:'t5_93',t:5,name:'Black Hand Ring',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:4.4,def:0,slots:0},
+  {id:'t5_94',t:5,name:'Omerta Band',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:4.6,def:0,slots:0},
+  {id:'t5_95',t:5,name:'La Famiglia Ring',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:4.8,def:0,slots:0},
+  {id:'t5_96',t:5,name:'The Don Band',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:5.0,def:0,slots:0},
+  {id:'t5_97',t:5,name:'Corleone Ring',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:5.2,def:0,slots:0},
+  {id:'t5_98',t:5,name:'Il Capo Band',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:5.4,def:0,slots:0},
+  {id:'t5_99',t:5,name:'Commission Ring',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:5.6,def:0,slots:0},
+  {id:'t5_100',t:5,name:'The Signet',img:'https://mericaltinors1983-max.github.io/hustler/yuzuk_base.png',ks:5.5,def:0,slots:0}
+  ],
+  necklace:[
+  {id:'t1_01',t:1,name:'Street Chain',img:'https://mericaltinors1983-max.github.io/hustler/kolye_t1_base.png',ks:0.5,def:0,slots:0},
+  {id:'t1_02',t:1,name:'Alley Pendant',img:'https://mericaltinors1983-max.github.io/hustler/kolye_t1_base.png',ks:0.7,def:0,slots:0},
+  {id:'t1_03',t:1,name:'Iron Link',img:'https://mericaltinors1983-max.github.io/hustler/kolye_t1_base.png',ks:0.9,def:0,slots:0},
+  {id:'t1_04',t:1,name:'Copper Chain',img:'https://mericaltinors1983-max.github.io/hustler/kolye_t1_base.png',ks:1.1,def:0,slots:0},
+  {id:'t1_05',t:1,name:'Rusty Pendant',img:'https://mericaltinors1983-max.github.io/hustler/kolye_t1_base.png',ks:1.3,def:0,slots:0},
+  {id:'t1_06',t:1,name:'Wire Necklace',img:'https://mericaltinors1983-max.github.io/hustler/kolye_t1_base.png',ks:1.5,def:0,slots:0},
+  {id:'t1_07',t:1,name:'Pawn Chain',img:'https://mericaltinors1983-max.github.io/hustler/kolye_t1_base.png',ks:1.7,def:0,slots:0},
+  {id:'t1_08',t:1,name:'Brass Link',img:'https://mericaltinors1983-max.github.io/hustler/kolye_t1_base.png',ks:1.9,def:0,slots:0},
+  {id:'t1_09',t:1,name:'Back Alley Chain',img:'https://mericaltinors1983-max.github.io/hustler/kolye_t1_base.png',ks:2.1,def:0,slots:0},
+  {id:'t1_10',t:1,name:'Tin Pendant',img:'https://mericaltinors1983-max.github.io/hustler/kolye_t1_base.png',ks:2.5,def:0,slots:0},
+  {id:'t2_11',t:2,name:'Silver Hustle Chain',img:'https://mericaltinors1983-max.github.io/hustler/kolye_t2_base.png',ks:1.7,def:0,slots:0},
+  {id:'t2_12',t:2,name:'Night Pendant',img:'https://mericaltinors1983-max.github.io/hustler/kolye_t2_base.png',ks:1.9,def:0,slots:0},
+  {id:'t2_13',t:2,name:'Shadow Link',img:'https://mericaltinors1983-max.github.io/hustler/kolye_t2_base.png',ks:2.1,def:0,slots:0},
+  {id:'t2_14',t:2,name:'Racket Chain',img:'https://mericaltinors1983-max.github.io/hustler/kolye_t2_base.png',ks:2.3,def:0,slots:0},
+  {id:'t2_15',t:2,name:'Smuggler Pendant',img:'https://mericaltinors1983-max.github.io/hustler/kolye_t2_base.png',ks:2.5,def:0,slots:0},
+  {id:'t2_16',t:2,name:'Dark Chain',img:'https://mericaltinors1983-max.github.io/hustler/kolye_t2_base.png',ks:2.7,def:0,slots:0},
+  {id:'t2_17',t:2,name:'Mob Link',img:'https://mericaltinors1983-max.github.io/hustler/kolye_t2_base.png',ks:2.9,def:0,slots:0},
+  {id:'t2_18',t:2,name:'Steel Pendant',img:'https://mericaltinors1983-max.github.io/hustler/kolye_t2_base.png',ks:3.1,def:0,slots:0},
+  {id:'t2_19',t:2,name:'Runner Chain',img:'https://mericaltinors1983-max.github.io/hustler/kolye_t2_base.png',ks:3.3,def:0,slots:0},
+  {id:'t2_20',t:2,name:'Midnight Link',img:'https://mericaltinors1983-max.github.io/hustler/kolye_t2_base.png',ks:3.5,def:0,slots:0},
+  {id:'t3_21',t:3,name:'Enforcer Chain',img:'https://mericaltinors1983-max.github.io/hustler/kolye_t3_base.png',ks:2.7,def:0,slots:0},
+  {id:'t3_22',t:3,name:'Blood Pendant',img:'https://mericaltinors1983-max.github.io/hustler/kolye_t3_base.png',ks:2.9,def:0,slots:0},
+  {id:'t3_23',t:3,name:'Chrome Link',img:'https://mericaltinors1983-max.github.io/hustler/kolye_t3_base.png',ks:3.1,def:0,slots:0},
+  {id:'t3_24',t:3,name:'Syndicate Chain',img:'https://mericaltinors1983-max.github.io/hustler/kolye_t3_base.png',ks:3.3,def:0,slots:0},
+  {id:'t3_25',t:3,name:'Hitman Pendant',img:'https://mericaltinors1983-max.github.io/hustler/kolye_t3_base.png',ks:3.5,def:0,slots:0},
+  {id:'t3_26',t:3,name:'Iron Crown Chain',img:'https://mericaltinors1983-max.github.io/hustler/kolye_t3_base.png',ks:3.7,def:0,slots:0},
+  {id:'t3_27',t:3,name:'Dark Syndicate Link',img:'https://mericaltinors1983-max.github.io/hustler/kolye_t3_base.png',ks:3.9,def:0,slots:0},
+  {id:'t3_28',t:3,name:'Operator Chain',img:'https://mericaltinors1983-max.github.io/hustler/kolye_t3_base.png',ks:4.1,def:0,slots:0},
+  {id:'t3_29',t:3,name:'Phantom Pendant',img:'https://mericaltinors1983-max.github.io/hustler/kolye_t3_base.png',ks:4.3,def:0,slots:0},
+  {id:'t3_30',t:3,name:'Steel Empire Chain',img:'https://mericaltinors1983-max.github.io/hustler/kolye_t3_base.png',ks:4.5,def:0,slots:0},
+  {id:'t4_31',t:4,name:'Underboss Chain',img:'https://mericaltinors1983-max.github.io/hustler/kolye_t4_base.png',ks:3.7,def:0,slots:0},
+  {id:'t4_32',t:4,name:'Black Widow Pendant',img:'https://mericaltinors1983-max.github.io/hustler/kolye_t4_base.png',ks:3.9,def:0,slots:0},
+  {id:'t4_33',t:4,name:'Crimson Link',img:'https://mericaltinors1983-max.github.io/hustler/kolye_t4_base.png',ks:4.1,def:0,slots:0},
+  {id:'t4_34',t:4,name:'Death Dealer Chain',img:'https://mericaltinors1983-max.github.io/hustler/kolye_t4_base.png',ks:4.3,def:0,slots:0},
+  {id:'t4_35',t:4,name:'Empire Pendant',img:'https://mericaltinors1983-max.github.io/hustler/kolye_t4_base.png',ks:4.5,def:0,slots:0},
+  {id:'t4_36',t:4,name:'Shadow Crown Chain',img:'https://mericaltinors1983-max.github.io/hustler/kolye_t4_base.png',ks:4.7,def:0,slots:0},
+  {id:'t4_37',t:4,name:'Kingpin Link',img:'https://mericaltinors1983-max.github.io/hustler/kolye_t4_base.png',ks:4.9,def:0,slots:0},
+  {id:'t4_38',t:4,name:'Blood Covenant Chain',img:'https://mericaltinors1983-max.github.io/hustler/kolye_t4_base.png',ks:5.1,def:0,slots:0},
+  {id:'t4_39',t:4,name:'Dark Dynasty Pendant',img:'https://mericaltinors1983-max.github.io/hustler/kolye_t4_base.png',ks:5.3,def:0,slots:0},
+  {id:'t4_40',t:4,name:'Executioner Chain',img:'https://mericaltinors1983-max.github.io/hustler/kolye_t4_base.png',ks:5.5,def:0,slots:0},
+  {id:'t5_41',t:5,name:'Godfather Chain',img:'https://mericaltinors1983-max.github.io/hustler/kolye_t5_base.png',ks:4.7,def:0,slots:0},
+  {id:'t5_42',t:5,name:'Cosa Nostra Pendant',img:'https://mericaltinors1983-max.github.io/hustler/kolye_t5_base.png',ks:4.9,def:0,slots:0},
+  {id:'t5_43',t:5,name:'Black Hand Link',img:'https://mericaltinors1983-max.github.io/hustler/kolye_t5_base.png',ks:5.1,def:0,slots:0},
+  {id:'t5_44',t:5,name:'Omerta Chain',img:'https://mericaltinors1983-max.github.io/hustler/kolye_t5_base.png',ks:5.3,def:0,slots:0},
+  {id:'t5_45',t:5,name:'La Famiglia Pendant',img:'https://mericaltinors1983-max.github.io/hustler/kolye_t5_base.png',ks:5.5,def:0,slots:0},
+  {id:'t5_46',t:5,name:'The Don Chain',img:'https://mericaltinors1983-max.github.io/hustler/kolye_t5_base.png',ks:5.7,def:0,slots:0},
+  {id:'t5_47',t:5,name:'Corleone Link',img:'https://mericaltinors1983-max.github.io/hustler/kolye_t5_base.png',ks:5.9,def:0,slots:0},
+  {id:'t5_48',t:5,name:'Il Capo Chain',img:'https://mericaltinors1983-max.github.io/hustler/kolye_t5_base.png',ks:6.1,def:0,slots:0},
+  {id:'t5_49',t:5,name:'Commission Pendant',img:'https://mericaltinors1983-max.github.io/hustler/kolye_t5_base.png',ks:6.3,def:0,slots:0},
+  {id:'t5_50',t:5,name:'The Omerta',img:'https://mericaltinors1983-max.github.io/hustler/kolye_t5_base.png',ks:7.0,def:0,slots:0}
+  ],
+  suit:[
+  {id:'t1_01',t:1,name:'Tin Threads',img:'https://mericaltinors1983-max.github.io/hustler/suit_t1_base.png',ks:0.0,def:50,slots:1},
+  {id:'t1_02',t:1,name:'Street Wear',img:'https://mericaltinors1983-max.github.io/hustler/suit_t1_base.png',ks:0.0,def:100,slots:2},
+  {id:'t1_03',t:1,name:'Alley Coat',img:'https://mericaltinors1983-max.github.io/hustler/suit_t1_base.png',ks:0.0,def:150,slots:3},
+  {id:'t1_04',t:1,name:'Iron Suit',img:'https://mericaltinors1983-max.github.io/hustler/suit_t1_base.png',ks:0.0,def:200,slots:4},
+  {id:'t1_05',t:1,name:'Rusty Threads',img:'https://mericaltinors1983-max.github.io/hustler/suit_t1_base.png',ks:0.0,def:250,slots:5},
+  {id:'t1_06',t:1,name:'Wire Coat',img:'https://mericaltinors1983-max.github.io/hustler/suit_t1_base.png',ks:0.0,def:300,slots:6},
+  {id:'t1_07',t:1,name:'Copper Suit',img:'https://mericaltinors1983-max.github.io/hustler/suit_t1_base.png',ks:0.0,def:350,slots:7},
+  {id:'t1_08',t:1,name:'Pawn Threads',img:'https://mericaltinors1983-max.github.io/hustler/suit_t1_base.png',ks:0.0,def:400,slots:8},
+  {id:'t1_09',t:1,name:'Brass Coat',img:'https://mericaltinors1983-max.github.io/hustler/suit_t1_base.png',ks:0.0,def:450,slots:9},
+  {id:'t1_10',t:1,name:'Back Alley Suit',img:'https://mericaltinors1983-max.github.io/hustler/suit_t1_base.png',ks:0.0,def:500,slots:10},
+  {id:'t2_11',t:2,name:'Silver Hustler Coat',img:'https://mericaltinors1983-max.github.io/hustler/suit_t2_base.png',ks:0.0,def:600,slots:11},
+  {id:'t2_12',t:2,name:'Night Threads',img:'https://mericaltinors1983-max.github.io/hustler/suit_t2_base.png',ks:0.0,def:700,slots:12},
+  {id:'t2_13',t:2,name:'Shadow Suit',img:'https://mericaltinors1983-max.github.io/hustler/suit_t2_base.png',ks:0.0,def:800,slots:13},
+  {id:'t2_14',t:2,name:'Racket Coat',img:'https://mericaltinors1983-max.github.io/hustler/suit_t2_base.png',ks:0.0,def:900,slots:14},
+  {id:'t2_15',t:2,name:'Smuggler Threads',img:'https://mericaltinors1983-max.github.io/hustler/suit_t2_base.png',ks:0.0,def:0,slots:15},
+  {id:'t2_16',t:2,name:'Dark Suit',img:'https://mericaltinors1983-max.github.io/hustler/suit_t2_base.png',ks:0.0,def:0,slots:16},
+  {id:'t2_17',t:2,name:'Mob Coat',img:'https://mericaltinors1983-max.github.io/hustler/suit_t2_base.png',ks:0.0,def:0,slots:17},
+  {id:'t2_18',t:2,name:'Steel Threads',img:'https://mericaltinors1983-max.github.io/hustler/suit_t2_base.png',ks:0.0,def:0,slots:18},
+  {id:'t2_19',t:2,name:'Runner Suit',img:'https://mericaltinors1983-max.github.io/hustler/suit_t2_base.png',ks:0.0,def:0,slots:19},
+  {id:'t2_20',t:2,name:'Midnight Coat',img:'https://mericaltinors1983-max.github.io/hustler/suit_t2_base.png',ks:0.0,def:0,slots:20},
+  {id:'t3_21',t:3,name:'Enforcer Coat',img:'https://mericaltinors1983-max.github.io/hustler/suit_t3_base.png',ks:0.0,def:0,slots:21},
+  {id:'t3_22',t:3,name:'Blood Threads',img:'https://mericaltinors1983-max.github.io/hustler/suit_t3_base.png',ks:0.0,def:0,slots:22},
+  {id:'t3_23',t:3,name:'Chrome Suit',img:'https://mericaltinors1983-max.github.io/hustler/suit_t3_base.png',ks:0.0,def:0,slots:23},
+  {id:'t3_24',t:3,name:'Syndicate Coat',img:'https://mericaltinors1983-max.github.io/hustler/suit_t3_base.png',ks:0.0,def:0,slots:24},
+  {id:'t3_25',t:3,name:'Hitman Threads',img:'https://mericaltinors1983-max.github.io/hustler/suit_t3_base.png',ks:0.0,def:0,slots:25},
+  {id:'t3_26',t:3,name:'Iron Crown Suit',img:'https://mericaltinors1983-max.github.io/hustler/suit_t3_base.png',ks:0.0,def:0,slots:26},
+  {id:'t3_27',t:3,name:'Dark Syndicate Coat',img:'https://mericaltinors1983-max.github.io/hustler/suit_t3_base.png',ks:0.0,def:0,slots:27},
+  {id:'t3_28',t:3,name:'Operator Threads',img:'https://mericaltinors1983-max.github.io/hustler/suit_t3_base.png',ks:0.0,def:0,slots:28},
+  {id:'t3_29',t:3,name:'Phantom Suit',img:'https://mericaltinors1983-max.github.io/hustler/suit_t3_base.png',ks:0.0,def:0,slots:29},
+  {id:'t3_30',t:3,name:'Steel Empire Coat',img:'https://mericaltinors1983-max.github.io/hustler/suit_t3_base.png',ks:0.0,def:0,slots:30},
+  {id:'t4_31',t:4,name:'Underboss Coat',img:'https://mericaltinors1983-max.github.io/hustler/suit_t4_base.png',ks:0.0,def:0,slots:31},
+  {id:'t4_32',t:4,name:'Black Widow Threads',img:'https://mericaltinors1983-max.github.io/hustler/suit_t4_base.png',ks:0.0,def:0,slots:32},
+  {id:'t4_33',t:4,name:'Crimson Suit',img:'https://mericaltinors1983-max.github.io/hustler/suit_t4_base.png',ks:0.0,def:0,slots:33},
+  {id:'t4_34',t:4,name:'Death Dealer Coat',img:'https://mericaltinors1983-max.github.io/hustler/suit_t4_base.png',ks:0.0,def:0,slots:34},
+  {id:'t4_35',t:4,name:'Empire Threads',img:'https://mericaltinors1983-max.github.io/hustler/suit_t4_base.png',ks:0.0,def:0,slots:35},
+  {id:'t4_36',t:4,name:'Shadow Crown Suit',img:'https://mericaltinors1983-max.github.io/hustler/suit_t4_base.png',ks:0.0,def:0,slots:36},
+  {id:'t4_37',t:4,name:'Kingpin Coat',img:'https://mericaltinors1983-max.github.io/hustler/suit_t4_base.png',ks:0.0,def:0,slots:37},
+  {id:'t4_38',t:4,name:'Blood Covenant Threads',img:'https://mericaltinors1983-max.github.io/hustler/suit_t4_base.png',ks:0.0,def:0,slots:38},
+  {id:'t4_39',t:4,name:'Dark Dynasty Suit',img:'https://mericaltinors1983-max.github.io/hustler/suit_t4_base.png',ks:0.0,def:0,slots:39},
+  {id:'t4_40',t:4,name:'Executioner Coat',img:'https://mericaltinors1983-max.github.io/hustler/suit_t4_base.png',ks:0.0,def:0,slots:40},
+  {id:'t5_41',t:5,name:'Godfather Coat',img:'https://mericaltinors1983-max.github.io/hustler/suit_t5_base.png',ks:0.0,def:0,slots:41},
+  {id:'t5_42',t:5,name:'Cosa Nostra Threads',img:'https://mericaltinors1983-max.github.io/hustler/suit_t5_base.png',ks:0.0,def:0,slots:42},
+  {id:'t5_43',t:5,name:'Black Hand Suit',img:'https://mericaltinors1983-max.github.io/hustler/suit_t5_base.png',ks:0.0,def:0,slots:43},
+  {id:'t5_44',t:5,name:'Omerta Coat',img:'https://mericaltinors1983-max.github.io/hustler/suit_t5_base.png',ks:0.0,def:0,slots:44},
+  {id:'t5_45',t:5,name:'La Famiglia Threads',img:'https://mericaltinors1983-max.github.io/hustler/suit_t5_base.png',ks:0.0,def:0,slots:45},
+  {id:'t5_46',t:5,name:'The Don Suit',img:'https://mericaltinors1983-max.github.io/hustler/suit_t5_base.png',ks:0.0,def:0,slots:46},
+  {id:'t5_47',t:5,name:'Corleone Coat',img:'https://mericaltinors1983-max.github.io/hustler/suit_t5_base.png',ks:0.0,def:0,slots:47},
+  {id:'t5_48',t:5,name:'Il Capo Threads',img:'https://mericaltinors1983-max.github.io/hustler/suit_t5_base.png',ks:0.0,def:0,slots:48},
+  {id:'t5_49',t:5,name:'Commission Suit',img:'https://mericaltinors1983-max.github.io/hustler/suit_t5_base.png',ks:0.0,def:0,slots:49},
+  {id:'t5_50',t:5,name:'Wick`s Suit',img:'https://mericaltinors1983-max.github.io/hustler/suit_t5_base.png',ks:0.0,def:0,slots:50}
+  ],
+  yelek:[
+  {id:'t1_01',t:1,name:'Iron Vest',img:'https://mericaltinors1983-max.github.io/hustler/yelek_t1_base.png',ks:0.0,def:0,slots:0},
+  {id:'t1_02',t:1,name:'Tin Plate',img:'https://mericaltinors1983-max.github.io/hustler/yelek_t1_base.png',ks:0.0,def:900,slots:0},
+  {id:'t1_03',t:1,name:'Street Armor',img:'https://mericaltinors1983-max.github.io/hustler/yelek_t1_base.png',ks:0.0,def:800,slots:0},
+  {id:'t1_04',t:1,name:'Alley Shield',img:'https://mericaltinors1983-max.github.io/hustler/yelek_t1_base.png',ks:0.0,def:700,slots:0},
+  {id:'t1_05',t:1,name:'Copper Guard',img:'https://mericaltinors1983-max.github.io/hustler/yelek_t1_base.png',ks:0.0,def:600,slots:0},
+  {id:'t1_06',t:1,name:'Rusty Plate',img:'https://mericaltinors1983-max.github.io/hustler/yelek_t1_base.png',ks:0.0,def:500,slots:0},
+  {id:'t1_07',t:1,name:'Wire Vest',img:'https://mericaltinors1983-max.github.io/hustler/yelek_t1_base.png',ks:0.0,def:400,slots:0},
+  {id:'t1_08',t:1,name:'Pawn Shield',img:'https://mericaltinors1983-max.github.io/hustler/yelek_t1_base.png',ks:0.0,def:300,slots:0},
+  {id:'t1_09',t:1,name:'Brass Guard',img:'https://mericaltinors1983-max.github.io/hustler/yelek_t1_base.png',ks:0.0,def:200,slots:0},
+  {id:'t1_10',t:1,name:'Back Alley Plate',img:'https://mericaltinors1983-max.github.io/hustler/yelek_t1_base.png',ks:0.0,def:100,slots:0},
+  {id:'t2_11',t:2,name:'Silver Hustler Vest',img:'https://mericaltinors1983-max.github.io/hustler/yelek_t2_base.png',ks:0.0,def:0,slots:0},
+  {id:'t2_12',t:2,name:'Night Plate',img:'https://mericaltinors1983-max.github.io/hustler/yelek_t2_base.png',ks:0.0,def:0,slots:0},
+  {id:'t2_13',t:2,name:'Shadow Shield',img:'https://mericaltinors1983-max.github.io/hustler/yelek_t2_base.png',ks:0.0,def:0,slots:0},
+  {id:'t2_14',t:2,name:'Racket Guard',img:'https://mericaltinors1983-max.github.io/hustler/yelek_t2_base.png',ks:0.0,def:0,slots:0},
+  {id:'t2_15',t:2,name:'Smuggler Vest',img:'https://mericaltinors1983-max.github.io/hustler/yelek_t2_base.png',ks:0.0,def:0,slots:0},
+  {id:'t2_16',t:2,name:'Dark Plate',img:'https://mericaltinors1983-max.github.io/hustler/yelek_t2_base.png',ks:0.0,def:0,slots:0},
+  {id:'t2_17',t:2,name:'Mob Shield',img:'https://mericaltinors1983-max.github.io/hustler/yelek_t2_base.png',ks:0.0,def:0,slots:0},
+  {id:'t2_18',t:2,name:'Steel Guard',img:'https://mericaltinors1983-max.github.io/hustler/yelek_t2_base.png',ks:0.0,def:900,slots:0},
+  {id:'t2_19',t:2,name:'Runner Vest',img:'https://mericaltinors1983-max.github.io/hustler/yelek_t2_base.png',ks:0.0,def:600,slots:0},
+  {id:'t2_20',t:2,name:'Midnight Plate',img:'https://mericaltinors1983-max.github.io/hustler/yelek_t2_base.png',ks:0.0,def:300,slots:0},
+  {id:'t3_21',t:3,name:'Enforcer Vest',img:'https://mericaltinors1983-max.github.io/hustler/yelek_t3_base.png',ks:0.0,def:0,slots:0},
+  {id:'t3_22',t:3,name:'Blood Plate',img:'https://mericaltinors1983-max.github.io/hustler/yelek_t3_base.png',ks:0.0,def:0,slots:0},
+  {id:'t3_23',t:3,name:'Chrome Shield',img:'https://mericaltinors1983-max.github.io/hustler/yelek_t3_base.png',ks:0.0,def:0,slots:0},
+  {id:'t3_24',t:3,name:'Syndicate Guard',img:'https://mericaltinors1983-max.github.io/hustler/yelek_t3_base.png',ks:0.0,def:0,slots:0},
+  {id:'t3_25',t:3,name:'Hitman Vest',img:'https://mericaltinors1983-max.github.io/hustler/yelek_t3_base.png',ks:0.0,def:0,slots:0},
+  {id:'t3_26',t:3,name:'Iron Crown Plate',img:'https://mericaltinors1983-max.github.io/hustler/yelek_t3_base.png',ks:0.0,def:0,slots:0},
+  {id:'t3_27',t:3,name:'Dark Syndicate Shield',img:'https://mericaltinors1983-max.github.io/hustler/yelek_t3_base.png',ks:0.0,def:0,slots:0},
+  {id:'t3_28',t:3,name:'Operator Guard',img:'https://mericaltinors1983-max.github.io/hustler/yelek_t3_base.png',ks:0.0,def:0,slots:0},
+  {id:'t3_29',t:3,name:'Phantom Vest',img:'https://mericaltinors1983-max.github.io/hustler/yelek_t3_base.png',ks:0.0,def:0,slots:0},
+  {id:'t3_30',t:3,name:'Steel Empire Plate',img:'https://mericaltinors1983-max.github.io/hustler/yelek_t3_base.png',ks:0.0,def:0,slots:0},
+  {id:'t4_31',t:4,name:'Underboss Vest',img:'https://mericaltinors1983-max.github.io/hustler/yelek_t4_base.png',ks:0.0,def:0,slots:0},
+  {id:'t4_32',t:4,name:'Black Widow Plate',img:'https://mericaltinors1983-max.github.io/hustler/yelek_t4_base.png',ks:0.0,def:0,slots:0},
+  {id:'t4_33',t:4,name:'Crimson Shield',img:'https://mericaltinors1983-max.github.io/hustler/yelek_t4_base.png',ks:0.0,def:0,slots:0},
+  {id:'t4_34',t:4,name:'Death Dealer Guard',img:'https://mericaltinors1983-max.github.io/hustler/yelek_t4_base.png',ks:0.0,def:0,slots:0},
+  {id:'t4_35',t:4,name:'Empire Vest',img:'https://mericaltinors1983-max.github.io/hustler/yelek_t4_base.png',ks:0.0,def:0,slots:0},
+  {id:'t4_36',t:4,name:'Shadow Crown Plate',img:'https://mericaltinors1983-max.github.io/hustler/yelek_t4_base.png',ks:0.0,def:0,slots:0},
+  {id:'t4_37',t:4,name:'Kingpin Shield',img:'https://mericaltinors1983-max.github.io/hustler/yelek_t4_base.png',ks:0.0,def:0,slots:0},
+  {id:'t4_38',t:4,name:'Blood Covenant Guard',img:'https://mericaltinors1983-max.github.io/hustler/yelek_t4_base.png',ks:0.0,def:0,slots:0},
+  {id:'t4_39',t:4,name:'Dark Dynasty Vest',img:'https://mericaltinors1983-max.github.io/hustler/yelek_t4_base.png',ks:0.0,def:0,slots:0},
+  {id:'t4_40',t:4,name:'Executioner Plate',img:'https://mericaltinors1983-max.github.io/hustler/yelek_t4_base.png',ks:0.0,def:0,slots:0},
+  {id:'t5_41',t:5,name:'Godfather Vest',img:'https://mericaltinors1983-max.github.io/hustler/yelek_t5_base.png',ks:0.0,def:0,slots:0},
+  {id:'t5_42',t:5,name:'Cosa Nostra Plate',img:'https://mericaltinors1983-max.github.io/hustler/yelek_t5_base.png',ks:0.0,def:0,slots:0},
+  {id:'t5_43',t:5,name:'Black Hand Shield',img:'https://mericaltinors1983-max.github.io/hustler/yelek_t5_base.png',ks:0.0,def:0,slots:0},
+  {id:'t5_44',t:5,name:'Omerta Guard',img:'https://mericaltinors1983-max.github.io/hustler/yelek_t5_base.png',ks:0.0,def:0,slots:0},
+  {id:'t5_45',t:5,name:'La Famiglia Vest',img:'https://mericaltinors1983-max.github.io/hustler/yelek_t5_base.png',ks:0.0,def:0,slots:0},
+  {id:'t5_46',t:5,name:'The Don Plate',img:'https://mericaltinors1983-max.github.io/hustler/yelek_t5_base.png',ks:0.0,def:0,slots:0},
+  {id:'t5_47',t:5,name:'Corleone Shield',img:'https://mericaltinors1983-max.github.io/hustler/yelek_t5_base.png',ks:0.0,def:0,slots:0},
+  {id:'t5_48',t:5,name:'Il Capo Guard',img:'https://mericaltinors1983-max.github.io/hustler/yelek_t5_base.png',ks:0.0,def:0,slots:0},
+  {id:'t5_49',t:5,name:'Commission Vest',img:'https://mericaltinors1983-max.github.io/hustler/yelek_t5_base.png',ks:0.0,def:0,slots:0},
+  {id:'t5_50',t:5,name:'Iron Curtain',img:'https://mericaltinors1983-max.github.io/hustler/yelek_t5_base.png',ks:0.0,def:0,slots:0}
+  ],
+  bag:[
+
+  ],
+};
+
+var TS_C={1:'#888',2:'#22c55e',3:'#3b82f6',4:'#a855f7',5:'#f59e0b'};
+var TS_N={1:'NORMAL',2:'RARE',3:'EPIC',4:'LEGENDARY',5:'MYTHIC'};
+var TS_B={1:'#f5f5f5',2:'#f0fdf4',3:'#eff6ff',4:'#faf5ff',5:'#fffbeb'};
+var SL={suit:'SUIT',weapon:'WEAPON',bag:'BAG',necklace:'NECKLACE',ring:'RING',yelek:'ÇELİK YELEK'};
+var SE={suit:'🧥',weapon:'🔫',bag:'💼',necklace:'📿',ring:'💍',yelek:'🛡️'};
+var equipped={suit:'t1_01',weapon:'t1_01',bag:'t1_01',necklace:'t1_01',ring:'t1_01',yelek:'t1_01'};
+var mCat=null,mTier=null;
+
+function openModal(cat){
+  mCat=cat; mTier=null;
+  document.getElementById('modal-title').textContent='SELECT '+SL[cat];
+  document.getElementById('modal-overlay').classList.add('open');
+  renderTiers(); renderList();
+}
+function closeModal(){ document.getElementById('modal-overlay').classList.remove('open'); mCat=null; }
+
+function renderTiers(){
+  document.getElementById('modal-tiers').innerHTML=[null,1,2,3,4,5].map(function(t){
+    var a=mTier===t,c=t?TS_C[t]:'#111';
+    return '<button onclick="setTier('+(t===null?'null':t)+')" style="padding:2px 9px;border-radius:6px;border:1px solid '+(a?c:'#e0e0e0')+';background:'+(a?c:'#fff')+';color:'+(a?'#fff':(t?c:'#888'))+';font-size:8px;font-weight:bold;letter-spacing:1px;cursor:pointer;font-family:\'Bebas Neue\',sans-serif;">'+(t===null?'ALL':'T'+t)+'</button>';
+  }).join('');
+}
+function setTier(t){ mTier=t; renderTiers(); renderList(); }
+
+function renderList(){
+  var items=(ITEM_LIST[mCat]||[]).filter(function(i){return mTier===null||i.t===mTier;});
+  document.getElementById('modal-list').innerHTML=items.map(function(item){
+    var sel=equipped[mCat]===item.id,c=TS_C[item.t],b=TS_B[item.t],url=item.img||'';
+    return '<button onclick="selectItem(\''+item.id+'\')" style="width:100%;display:flex;align-items:center;gap:10px;padding:8px 10px;margin-bottom:4px;background:'+(sel?'#f8f8f8':'#fff')+';border:1.5px solid '+(sel?'#111':'#ebebeb')+';border-radius:10px;cursor:pointer;text-align:left;">'
+      +'<div style="width:38px;height:38px;border-radius:7px;background:'+b+';border:1px solid '+c+'44;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;"><img src="'+url+'" style="width:34px;height:34px;object-fit:contain;" onerror="this.style.display=\'none\'"></div>'
+      +'<div style="flex:1;"><div style="font-size:10px;font-weight:bold;color:#111;font-family:\'Bebas Neue\',sans-serif;letter-spacing:.8px;margin-bottom:2px;">'+item.name+'</div>'
+      +'<span style="font-size:7px;color:'+c+';padding:1px 5px;border-radius:3px;background:'+b+';border:1px solid '+c+'33;font-family:\'Oswald\',sans-serif;font-weight:bold;">T'+item.t+' · '+TS_N[item.t]+(item.ks?' +%'+item.ks+' KS':'')+(item.def?' +'+item.def+' DEF':'')+'</span>'
+      +'</div>'+(sel?'<div style="width:16px;height:16px;border-radius:50%;background:#111;display:flex;align-items:center;justify-content:center;"><span style="color:#fff;font-size:9px;">✓</span></div>':'')
+      +'</button>';
+  }).join('');
+}
+
+function selectItem(id){
+  if(!mCat) return;
+  equipped[mCat]=id;
+  var slot=document.getElementById('slot-'+mCat);
+  if(slot){
+    var tier='t'+id.charAt(1);
+    var t=parseInt(tier.charAt(1));
+    var itemObj=(ITEM_LIST[mCat]||[]).find(function(x){return x.id===id;}); var url=itemObj?itemObj.img:'';
+    var img=slot.querySelector('.slot-img'); if(img) img.src=url;
+    var nm=slot.querySelector('.slot-name'); if(nm) nm.textContent=SL[mCat];
+    var tr=slot.querySelector('.slot-tier'); if(tr){tr.textContent=tier.toUpperCase()+' · '+TS_N[t];tr.style.color=TS_C[t];}
+    var dot=slot.querySelector('.slot-dot'); if(dot) dot.style.background=TS_C[t];
+  }
+  closeModal();
+}
+
+// Suit: def + slot (docs'a göre T1#1=50def,1slot ... T5#10=15000def,50slot)
+var SUIT_STATS = {
+  t1_01:{def:50,slots:1}, t1_02:{def:100,slots:2}, t1_03:{def:150,slots:3},
+  t2_01:{def:1000,slots:11}, t2_03:{def:1200,slots:13},
+  t3_01:{def:4000,slots:21}, t3_05:{def:3600,slots:17},
+  t4_01:{def:9000,slots:31}, t4_07:{def:8100,slots:27},
+  t5_01:{def:15000,slots:41}, t5_10:{def:15000,slots:50},
+};
+// Weapon: KS çarpanı (% olarak, örn 1.0 = ×1.01)
+var WEAPON_KS = {
+  t1_01:1.0, t1_05:1.8,
+  t2_01:3.2, t2_03:3.6,
+  t3_01:5.2, t3_02:5.4,
+  t4_01:7.2, t4_04:7.8,
+  t5_01:10.2, t5_09:11.8,
+};
+// Necklace: KS çarpanı (%)
+var NECKLACE_KS = {
+  t1_01:0.5,  t1_02:0.7,
+  t2_01:1.7,  t2_05:2.5,
+  t3_01:3.5,  t3_09:4.5,
+  t4_01:5.5,  t4_10:6.5,
+  t5_01:7.5,  t5_04:8.0,
+};
+// Ring: KS çarpanı (%)
+var RING_KS = {
+  t1_01:0.3,  t1_05:1.1,
+  t2_01:1.2,  t2_02:1.4,
+  t3_01:2.0,  t3_05:2.8,
+  t4_01:2.8,  t4_07:4.0,
+  t5_01:5.5,  t5_04:6.2,
+};
+// Bag: def + slot
+var BAG_STATS = {
+  t1_01:{def:50,slots:5},
+  t2_01:{def:150,slots:10},
+  t3_01:{def:400,slots:18},
+  t4_01:{def:1200,slots:28},
+  t5_01:{def:2500,slots:38},
+};
+
+// Yelek: sadece DEF (docs'a göre T1#1=1000 ... T5#1=30000)
+var YELEK_STATS = {
+  t1_01:1000, t1_02:900, t1_05:600, t1_10:100,
+  t2_01:3000, t2_05:1800, t2_10:300,
+  t3_01:8000, t3_05:6000, t3_10:3500,
+  t4_01:18000, t4_05:14400, t4_10:9900,
+  t5_01:30000, t5_05:26000, t5_10:22000,
+};
+var BASE_KS = 2.65;   // oyuncunun temel KS'i (sunucudan gelecek)
+var BASE_DEF = 0;     // yelek yok varsayılan
+
+function calcStats() {
+  // 1) KS — silah × kolye × yüzük çarpanları
+  var wKS  = 1 + (WEAPON_KS[equipped.weapon]   || 0) / 100;
+  var nKS  = 1 + (NECKLACE_KS[equipped.necklace] || 0) / 100;
+  var rKS  = 1 + (RING_KS[equipped.ring]        || 0) / 100;
+  var finalKS = +(BASE_KS * wKS * nKS * rKS).toFixed(2);
+
+  // 2) DEF — suit + bag + bodyguardlar
+  var suitDef  = (SUIT_STATS[equipped.suit]  || {def:0}).def;
+  var bagDef   = (BAG_STATS[equipped.bag]    || {def:0}).def;
+  var yelekDef = YELEK_STATS[equipped.yelek] || 0;
+  var bgDef    = 0;
+  for (var i = 1; i <= 5; i++) { if (equippedBG[i]) bgDef += equippedBG[i].def; }
+  var totalDef = BASE_DEF + suitDef + bagDef + yelekDef + bgDef;
+
+  // 3) Slots
+  var suitSlots = (SUIT_STATS[equipped.suit] || {slots:0}).slots;
+  var bagSlots  = (BAG_STATS[equipped.bag]   || {slots:0}).slots;
+  var totalSlots = suitSlots + bagSlots;
+
+  // Ekranda güncelle
+  var ksEl  = document.getElementById('stat-ks');
+  var defEl = document.getElementById('stat-def');
+  var slEl  = document.getElementById('stat-slots');
+  if (ksEl)  ksEl.textContent  = finalKS.toFixed(2);
+  if (defEl) defEl.textContent = totalDef.toLocaleString();
+  if (slEl)  slEl.textContent  = totalSlots;
+}
+
+// Her item seçiminde hesapla
+var _origSelectItem = selectItem;
+selectItem = function(id) { _origSelectItem(id); calcStats(); };
+
+var _origUpdateBG = updateBGSlots;
+updateBGSlots = function() { _origUpdateBG(); calcStats(); };
+
+// Sayfa yüklenince hesapla
+window.addEventListener('load', function(){ setTimeout(calcStats, 100); setTimeout(renderFriends, 150); });
+
+
+var BASE = 'https://mericaltinors1983-max.github.io/hustler/';
+var ALL_BODYGUARDS = [
+  // T1
+  {id:'paulie',    name:'PAULIE',    tier:1, def:400,  img:BASE+'criminal.png'},
+  {id:'fredo',     name:'FREDO',     tier:1, def:350,  img:BASE+'bussiness-man.png'},
+  {id:'carlo',     name:'CARLO',     tier:1, def:380,  img:BASE+'man (5).png'},
+  {id:'luca',      name:'LUCA',      tier:1, def:420,  img:BASE+'man (9).png'},
+  {id:'sonny',     name:'SONNY',     tier:1, def:450,  img:BASE+'man (8).png'},
+  // T2
+  {id:'dutch',     name:'DUTCH',     tier:2, def:700,  img:BASE+'man.png'},
+  {id:'nucky',     name:'NUCKY',     tier:2, def:750,  img:BASE+'business.png'},
+  {id:'jimmy',     name:'JIMMY',     tier:2, def:800,  img:BASE+'man (2).png'},
+  {id:'chalky',    name:'CHALKY',    tier:2, def:720,  img:BASE+'man-2.png'},
+  {id:'capone',    name:'CAPONE',    tier:2, def:850,  img:BASE+'gangster-1.png'},
+  // T3
+  {id:'tuco',      name:'TUCO',      tier:3, def:1200, img:BASE+'people-5.png'},
+  {id:'hector',    name:'HECTOR',    tier:3, def:1100, img:BASE+'god.png'},
+  {id:'gus',       name:'GUS',       tier:3, def:1350, img:BASE+'people-6.png'},
+  {id:'lalo',      name:'LALO',      tier:3, def:1280, img:BASE+'mafia-1.png'},
+  {id:'salamanca', name:'SALAMANCA', tier:3, def:1400, img:BASE+'mafia.png'},
+  // T4
+  {id:'nino',      name:'NINO',      tier:4, def:2000, img:BASE+'people-1.png'},
+  {id:'ghost',     name:'GHOST',     tier:4, def:2100, img:BASE+'people-2.png'},
+  {id:'tommy',     name:'TOMMY',     tier:4, def:2200, img:BASE+'people-3.png'},
+  {id:'avon',      name:'AVON',      tier:4, def:1900, img:BASE+'people-4.png'},
+  {id:'stringer',  name:'STRINGER',  tier:4, def:2050, img:BASE+'gang-member.png'},
+  // T5
+  {id:'escobar',   name:'ESCOBAR',   tier:5, def:3500, img:BASE+'escobar.png'},
+  {id:'montana',   name:'MONTANA',   tier:5, def:3200, img:BASE+'montana.png'},
+  {id:'michael',   name:'MICHAEL',   tier:5, def:3800, img:BASE+'micheal.png'},
+  {id:'wick',      name:'WICK',      tier:5, def:4000, img:BASE+'wick.png'},
+  {id:'vito',      name:'VITO',      tier:5, def:4200, img:BASE+'vito.png'},
+];
+
+// Oyuncunun sahip olduğu BG'ler (ileride sunucudan gelecek)
+var OWNED_BODYGUARDS = ALL_BODYGUARDS.slice(0, 6); // örnek: ilk 6'sına sahip
+
+var equippedBG = {1:null,2:null,3:null,4:null,5:null};
+var activeBGSlot = null;
+
+function openBGModal(slot) {
+  activeBGSlot = slot;
+  document.getElementById('modal-title').textContent = 'BODYGUARD '+slot+' SEÇ';
+  document.getElementById('modal-tiers').innerHTML = '';
+  document.getElementById('modal-overlay').classList.add('open');
+  renderBGList();
+}
+function renderBGList() {
+  var usedIds = Object.values(equippedBG).filter(Boolean).map(function(b){ return b.id; });
+  var html = '';
+  if (equippedBG[activeBGSlot]) {
+    html += '<button onclick="removeBG()" style="width:100%;padding:8px 10px;margin-bottom:6px;background:#fff0f0;border:1px dashed #e63946;border-radius:8px;cursor:pointer;font-family:\'Oswald\',sans-serif;font-size:10px;color:#e63946;font-weight:600;">✕ SLOTU BOŞALT</button>';
+  }
+  if (OWNED_BODYGUARDS.length === 0) {
+    html += '<div style="text-align:center;padding:30px 0;color:#ccc;"><div style="font-size:32px;opacity:.3;">🛡️</div><div style="font-family:\'Bebas Neue\',sans-serif;font-size:14px;letter-spacing:2px;margin-top:8px;">HENÜz BODYGUARD YOK</div></div>';
+  } else {
+    OWNED_BODYGUARDS.forEach(function(bg) {
+      var sel = equippedBG[activeBGSlot] && equippedBG[activeBGSlot].id === bg.id;
+      var inUse = !sel && usedIds.indexOf(bg.id) !== -1;
+      var c = TS_C[bg.tier], b = TS_B[bg.tier];
+      html += '<button onclick="selectBG(\''+bg.id+'\')" '+(inUse?'disabled':'')+' style="width:100%;display:flex;align-items:center;gap:10px;padding:8px 10px;margin-bottom:4px;background:'+(sel?'#f8f8f8':'#fff')+';border:1.5px solid '+(sel?'#111':'#ebebeb')+';border-radius:10px;cursor:pointer;text-align:left;opacity:'+(inUse?'.4':'1')+';">'
+        +'<div style="width:42px;height:42px;border-radius:50%;background:'+b+';border:1px solid '+c+'44;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;">'
+        +'<img src="'+bg.img+'" style="width:38px;height:38px;object-fit:contain;" onerror="this.style.display=\'none\'">'
+        +'</div>'
+        +'<div style="flex:1;"><div style="font-family:\'Bebas Neue\',sans-serif;font-size:12px;color:#111;letter-spacing:1px;">'+bg.name+'</div>'
+        +'<div style="display:flex;gap:6px;align-items:center;margin-top:2px;">'
+        +'<span style="font-size:7px;color:'+c+';padding:1px 5px;border-radius:3px;background:'+b+';font-family:\'Oswald\',sans-serif;font-weight:bold;">T'+bg.tier+'</span>'
+        +'<span style="font-family:\'Oswald\',sans-serif;font-size:9px;color:#4ade80;font-weight:600;">+'+bg.def+' DEF</span>'
+        +'</div></div>'
+        +(inUse?'<span style="font-size:8px;color:#ccc;font-family:\'Oswald\',sans-serif;">KULLANILIYOR</span>':'')
+        +(sel?'<div style="width:16px;height:16px;border-radius:50%;background:#111;display:flex;align-items:center;justify-content:center;"><span style="color:#fff;font-size:9px;">✓</span></div>':'')
+        +'</button>';
+    });
+  }
+  document.getElementById('modal-list').innerHTML = html;
+}
+function selectBG(id) {
+  var bg = OWNED_BODYGUARDS.find(function(b){ return b.id===id; });
+  if (!bg || !activeBGSlot) return;
+  equippedBG[activeBGSlot] = bg;
+  updateBGSlots(); closeModal();
+}
+function removeBG() {
+  equippedBG[activeBGSlot] = null;
+  updateBGSlots(); closeModal();
+}
+function updateBGSlots() {
+  var total = 0;
+  for (var i=1;i<=5;i++) {
+    var bg = equippedBG[i];
+    var ico = document.getElementById('bg'+i+'-ico');
+    var def = document.getElementById('bg'+i+'-def');
+    var slot = document.getElementById('slot-bg'+i);
+    if (bg) {
+      if(ico){ ico.innerHTML='<img src="'+bg.img+'" style="width:20px;height:20px;object-fit:contain;" onerror="this.style.display=\'none\'">'; }
+      if(def){def.textContent='+'+bg.def+' DEF';def.style.color='#4ade80';}
+      if(slot) slot.style.borderColor='#4ade80';
+      total += bg.def;
+    } else {
+      if(ico) ico.innerHTML='🛡️';
+      if(def){def.textContent='— DEF';def.style.color='#ccc';}
+      if(slot) slot.style.borderColor='#e0e0e0';
+    }
+  }
+  var el=document.getElementById('bg-total-def');
+  if(el){el.textContent='+'+total;el.style.color=total>0?'#4ade80':'#ccc';}
+}
+
+// ── ARKADAŞ SİSTEMİ ──────────────────────────────────────
+var FRIENDS = [];
+
+function renderFriends() {
+  var list = document.getElementById('friends-list');
+  var empty = document.getElementById('friends-empty');
+  var count = document.getElementById('friend-count');
+  if (!list) return;
+  if (count) count.textContent = FRIENDS.length;
+  Array.from(list.children).forEach(function(c){ if(c.id!=='friends-empty') c.remove(); });
+  if (FRIENDS.length === 0) { if(empty) empty.style.display='block'; return; }
+  if (empty) empty.style.display = 'none';
+  FRIENDS.forEach(function(f) {
+    var card = document.createElement('div');
+    card.style.cssText = 'flex-shrink:0;text-align:center;cursor:pointer;';
+    card.innerHTML =
+      '<div style="position:relative;display:inline-block;">'
+      +'<div style="width:36px;height:36px;border-radius:50%;background:#1a1a2e;border:1.5px solid #333;display:flex;align-items:center;justify-content:center;font-size:16px;margin:0 auto;">👤</div>'
+      +(f.online?'<div style="position:absolute;bottom:0;right:0;width:9px;height:9px;border-radius:50%;background:#4ade80;border:1.5px solid #fff;"></div>':'')
+      +'</div>'
+      +'<div style="font-family:\'Bebas Neue\',sans-serif;font-size:7px;color:#ccc;margin-top:2px;letter-spacing:.5px;max-width:44px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+f.name+'</div>';
+    list.insertBefore(card, list.firstChild);
+  });
+}
+
+function addFriend() {
+  var name = prompt('Arkadaş kullanıcı adı:');
+  if (!name || !name.trim()) return;
+  FRIENDS.push({name:name.trim().toUpperCase(), online:false});
+  renderFriends();
+}
+
+function openProfileShare(){ alert('Profil paylaş — Yakında'); }
+
+// ── OYUNCU VERİSİ — ileride sunucudan gelecek ────────────
+var PLAYER_DATA = {
+  // Satın alınan personeller (NPC'den alınca true olur)
+  personals: {
+    pilot:  false,  // ← true olunca kart görünür
+    kaptan: false,  // ← true olunca kart görünür
+  },
+  // Sahip olunan villalar: { sehirId: true }
+  villas: {
+    // istanbul: true,
+    // roma: true,
+  }
+};
+
+// 40 şehir listesi — her birinin adı
+var ALL_CITIES = [
+  {id:'istanbul',   name:'İSTANBUL',    flag:'🇹🇷'},
+  {id:'izmir',      name:'İZMİR',       flag:'🇹🇷'},
+  {id:'diyarbakir', name:'DİYARBAKIR',  flag:'🇹🇷'},
+  {id:'trabzon',    name:'TRABZON',      flag:'🇹🇷'},
+  {id:'napoli',     name:'NAPOLİ',       flag:'🇮🇹'},
+  {id:'roma',       name:'ROMA',         flag:'🇮🇹'},
+  {id:'milano',     name:'MİLANO',       flag:'🇮🇹'},
+  {id:'palermo',    name:'PALERMO',      flag:'🇮🇹'},
+  {id:'berlin',     name:'BERLİN',       flag:'🇩🇪'},
+  {id:'hamburg',    name:'HAMBURG',      flag:'🇩🇪'},
+  {id:'munih',      name:'MÜNİH',        flag:'🇩🇪'},
+  {id:'frankfurt',  name:'FRANKFURT',    flag:'🇩🇪'},
+  {id:'moskova',    name:'MOSKOVA',      flag:'🇷🇺'},
+  {id:'stpetersburg',name:'ST. PETERSBURG',flag:'🇷🇺'},
+  {id:'novosibirsk',name:'NOVOSİBİRSK', flag:'🇷🇺'},
+  {id:'vladivostok',name:'VLADİVOSTOK', flag:'🇷🇺'},
+  {id:'pekin',      name:'PEKİN',        flag:'🇨🇳'},
+  {id:'shanghai',   name:'SHANGHAI',     flag:'🇨🇳'},
+  {id:'kanton',     name:'KANTON',       flag:'🇨🇳'},
+  {id:'chongqing',  name:'CHONGQING',    flag:'🇨🇳'},
+  {id:'tokyo',      name:'TOKYO',        flag:'🇯🇵'},
+  {id:'osaka',      name:'OSAKA',        flag:'🇯🇵'},
+  {id:'kyoto',      name:'KYOTO',        flag:'🇯🇵'},
+  {id:'yokohama',   name:'YOKOHAMA',     flag:'🇯🇵'},
+  {id:'newyork',    name:'NEW YORK',     flag:'🇺🇸'},
+  {id:'losangeles', name:'LOS ANGELES',  flag:'🇺🇸'},
+  {id:'chicago',    name:'CHİCAGO',      flag:'🇺🇸'},
+  {id:'miami',      name:'MİAMİ',        flag:'🇺🇸'},
+  {id:'mexicocity', name:'MEXİCO CİTY',  flag:'🇲🇽'},
+  {id:'guadalajara',name:'GUADALAJARA',  flag:'🇲🇽'},
+  {id:'monterrey',  name:'MONTERREY',    flag:'🇲🇽'},
+  {id:'tijuana',    name:'TİJUANA',      flag:'🇲🇽'},
+  {id:'saopablo',   name:'SÃO PAULO',    flag:'🇧🇷'},
+  {id:'riodejaneiro',name:'RİO DE JANEİRO',flag:'🇧🇷'},
+  {id:'salvador',   name:'SALVADOR',     flag:'🇧🇷'},
+  {id:'belem',      name:'BELÉM',        flag:'🇧🇷'},
+  {id:'medellin',   name:'MEDELLİN',     flag:'🇨🇴'},
+  {id:'bogota',     name:'BOGOTA',       flag:'🇨🇴'},
+  {id:'cali',       name:'CALİ',         flag:'🇨🇴'},
+  {id:'cartagena',  name:'CARTAGENA',    flag:'🇨🇴'},
+];
+
+// ── VILLA RENDER ─────────────────────────────────────────
+function renderVilla() {
+  var owned = ALL_CITIES.filter(function(c){ return PLAYER_DATA.villas[c.id]; });
+  var el = document.getElementById('villa-cards');
+  if (!el) return;
+
+  if (owned.length === 0) {
+    el.innerHTML = '<div style="text-align:center;padding:40px 20px;color:#ccc;">'
+      + '<div style="font-size:40px;opacity:.3;margin-bottom:10px;">🏠</div>'
+      + '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:16px;letter-spacing:2px;color:#ccc;">HENÜz VILLA YOK</div>'
+      + '<div style="font-family:\'Oswald\',sans-serif;font-size:10px;color:#ddd;margin-top:4px;">Şehirlerdeki NPC\'den satın alabilirsin</div>'
+      + '</div>';
+    return;
+  }
+
+  el.innerHTML = owned.map(function(c) {
+    return '<div style="background:#fff;border:1px solid #e8e8e8;border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:10px;">'
+      + '<div style="font-size:28px;flex-shrink:0;">🏠</div>'
+      + '<div style="flex:1;">'
+      + '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:13px;color:#111;letter-spacing:1px;">'+c.name+' VİLLA</div>'
+      + '<div style="font-family:\'Oswald\',sans-serif;font-size:9px;color:#888;margin-top:1px;">'+c.flag+' '+c.name+'</div>'
+      + '</div>'
+      + '<span style="font-size:9px;font-family:\'Oswald\',sans-serif;font-weight:700;color:#3b82f6;background:#eff6ff;padding:2px 7px;border-radius:4px;">OWNED</span>'
+      + '</div>';
+  }).join('');
+}
+
+// ── PERSONALS RENDER ─────────────────────────────────────
+var PERSONAL_DEFS = [
+  {id:'pilot',  ico:'✈️', bg:'#eff6ff', name:'PİLOT',  desc:'Lisanslı havacı · Uçak kontrolü',   col:'#3b82f6'},
+  {id:'kaptan', ico:'⚓', bg:'#f0fdf4', name:'KAPTAN', desc:'Deniz komutanı · Gemi kontrolü',    col:'#22c55e'},
+];
+
+function renderPersonals() {
+  var el = document.getElementById('personals-cards');
+  if (!el) return;
+
+  var hasAny = PERSONAL_DEFS.some(function(p){ return PLAYER_DATA.personals[p.id]; });
+
+  if (!hasAny) {
+    el.innerHTML = '<div style="text-align:center;padding:40px 20px;color:#ccc;">'
+      + '<div style="font-size:40px;opacity:.3;margin-bottom:10px;">👤</div>'
+      + '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:16px;letter-spacing:2px;color:#ccc;">HENÜz PERSONEL YOK</div>'
+      + '<div style="font-family:\'Oswald\',sans-serif;font-size:10px;color:#ddd;margin-top:4px;">NPC\'den Pilot veya Kaptan satın al</div>'
+      + '</div>';
+    return;
+  }
+
+  el.innerHTML = PERSONAL_DEFS.filter(function(p){ return PLAYER_DATA.personals[p.id]; }).map(function(p) {
+    return '<div style="background:#fff;border:1px solid #e8e8e8;border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:10px;">'
+      + '<div style="width:42px;height:42px;border-radius:50%;background:'+p.bg+';display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">'+p.ico+'</div>'
+      + '<div style="flex:1;">'
+      + '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:14px;color:#111;letter-spacing:1px;">'+p.name+'</div>'
+      + '<div style="font-family:\'Oswald\',sans-serif;font-size:9px;color:#888;margin-top:1px;">'+p.desc+'</div>'
+      + '</div>'
+      + '<span style="font-size:9px;font-family:\'Oswald\',sans-serif;font-weight:700;color:'+p.col+';background:'+p.bg+';padding:2px 7px;border-radius:4px;">AKTİF</span>'
+      + '</div>';
+  }).join('');
+}
+
+// Tab değişince render
+var _origSwitchTab = switchTab;
+switchTab = function(id) {
+  _origSwitchTab(id);
+  if (id === 'villa') renderVilla();
+  if (id === 'personals') renderPersonals();
+};
+
+// İlk yüklemede render et
+renderVilla();
+renderPersonals();
+
+// ── GARAJ ─────────────────────────────────────────────────
+
+var CARS_BY_TIER = {
+  1:[
+    {id:1,name:'Ford Model T',hiz:100,satis:700},
+    {id:2,name:'Chevrolet Series AC',hiz:102,satis:1400},
+    {id:3,name:'Dodge Brothers',hiz:104,satis:2100},
+    {id:4,name:'Buick Series 40',hiz:106,satis:2800},
+    {id:5,name:'Plymouth PA',hiz:108,satis:3500},
+    {id:6,name:'Oldsmobile F-28',hiz:110,satis:4200},
+    {id:7,name:'Pontiac Series 60',hiz:112,satis:4900},
+    {id:8,name:'Studebaker Erskine',hiz:114,satis:5600},
+    {id:9,name:'Hudson Super Six',hiz:116,satis:6300},
+    {id:10,name:'Nash Ajax',hiz:118,satis:7000},
+  ],
+  2:[
+    {id:11,name:'Ford Deluxe',hiz:120,satis:7700},
+    {id:12,name:'Chevrolet Master',hiz:122,satis:8400},
+    {id:13,name:'Chrysler Airflow',hiz:124,satis:9100},
+    {id:14,name:'Packard 120',hiz:126,satis:9800},
+    {id:15,name:'Lincoln Zephyr',hiz:128,satis:10500},
+    {id:16,name:'Cadillac Series 60',hiz:130,satis:11200},
+    {id:17,name:'Buick Century',hiz:132,satis:11900},
+    {id:18,name:'Dodge Luxury Liner',hiz:134,satis:12600},
+    {id:19,name:'Pontiac Deluxe Six',hiz:136,satis:13300},
+    {id:20,name:'Mercury Eight',hiz:138,satis:14000},
+  ],
+  3:[
+    {id:21,name:'Ford Mustang',hiz:140,satis:14700},
+    {id:22,name:'Chevrolet Camaro',hiz:142,satis:15400},
+    {id:23,name:'Dodge Charger',hiz:144,satis:16100},
+    {id:24,name:'Pontiac GTO',hiz:146,satis:16800},
+    {id:25,name:'Buick Riviera',hiz:148,satis:17500},
+    {id:26,name:'Oldsmobile 442',hiz:150,satis:18200},
+    {id:27,name:'Plymouth Barracuda',hiz:152,satis:18900},
+    {id:28,name:'Mercury Cougar',hiz:154,satis:19600},
+    {id:29,name:'Cadillac Eldorado',hiz:156,satis:20300},
+    {id:30,name:'Lincoln Continental',hiz:158,satis:21000},
+  ],
+  4:[
+    {id:31,name:'BMW M5',hiz:160,satis:21700},
+    {id:32,name:'Mercedes S63 AMG',hiz:162,satis:22400},
+    {id:33,name:'Audi RS7',hiz:164,satis:23100},
+    {id:34,name:'Porsche Panamera',hiz:166,satis:23800},
+    {id:35,name:'Jaguar XJR',hiz:168,satis:24500},
+    {id:36,name:'Maserati Quattroporte',hiz:170,satis:25200},
+    {id:37,name:'Bentley Continental',hiz:172,satis:25900},
+    {id:38,name:'Rolls Royce Ghost',hiz:174,satis:26600},
+    {id:39,name:'Aston Martin DB11',hiz:176,satis:27300},
+    {id:40,name:'Lamborghini Urus',hiz:178,satis:28000},
+  ],
+  5:[
+    {id:41,name:'Bugatti Chiron',hiz:180,satis:28700},
+    {id:42,name:'Koenigsegg Agera',hiz:182,satis:29400},
+    {id:43,name:'Pagani Huayra',hiz:184,satis:30100},
+    {id:44,name:'Lamborghini Aventador',hiz:186,satis:30800},
+    {id:45,name:'Ferrari LaFerrari',hiz:188,satis:31500},
+    {id:46,name:'McLaren P1',hiz:190,satis:32200},
+    {id:47,name:'Porsche 918 Spyder',hiz:192,satis:32900},
+    {id:48,name:'Aston Martin Valkyrie',hiz:194,satis:33600},
+    {id:49,name:'Rimac Nevera',hiz:196,satis:34300},
+    {id:50,name:'Mercedes AMG One',hiz:198,satis:35000},
+  ],
+};
+
+// Tüm arabaları flat map'e çevir
+var ALL_CARS = {};
+[1,2,3,4,5].forEach(function(t){
+  CARS_BY_TIER[t].forEach(function(c){ ALL_CARS[c.id] = Object.assign({tier:t},c); });
+});
+
+// DEMO: 2 araba çalınmış
+PLAYER_DATA.garaj = PLAYER_DATA.garaj || {
+  3:  {kaynak:'ARABA ÇALMA'},   // Dodge Charger T3
+  41: {kaynak:'ARABA ÇALMA'},   // Bugatti Chiron T5
+};
+
+var PLAYER_IS_DON = false; // Don/Consigliere kontrolü → crush açılır
+
+var TIER_COLORS = {1:'#888',2:'#3b82f6',3:'#a855f7',4:'#f97316',5:'#C9A84C'};
+var TIER_BG     = {1:'#f5f5f5',2:'#eff6ff',3:'#faf5ff',4:'#fff7ed',5:'#fffdf0'};
+
+function fmtMoney(n){
+  if(n>=1000000) return '$'+(n/1000000).toFixed(1).replace(/\.0$/,'')+'M';
+  if(n>=1000)    return '$'+Math.round(n/1000)+'K';
+  return '$'+n;
+}
+
+function renderGaraj() {
+  var el = document.getElementById('garaj-cards');
+  var cnt = document.getElementById('garaj-count');
+  if (!el) return;
+
+  var ids = Object.keys(PLAYER_DATA.garaj||{}).map(Number);
+  if (cnt) cnt.textContent = ids.length + ' ARAÇ';
+
+  if (ids.length === 0) {
+    el.innerHTML = '<div style="text-align:center;padding:40px 20px;">'
+      + '<div style="font-size:40px;opacity:.25;margin-bottom:10px;">🚗</div>'
+      + '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:16px;letter-spacing:2px;color:#ccc;">GARAJ BOŞ</div>'
+      + '<div style="font-family:\'Oswald\',sans-serif;font-size:10px;color:#ddd;margin-top:4px;">Araba çalma suçuyla araç kazan</div>'
+      + '</div>';
+    return;
+  }
+
+  el.innerHTML = ids.map(function(id) {
+    var car = ALL_CARS[id];
+    if (!car) return '';
+    var t = car.tier;
+    var isT5 = t === 5;
+    var tc = TIER_COLORS[t];
+    var tbg = TIER_BG[t];
+    var src = PLAYER_DATA.garaj[id];
+
+    return '<div style="background:#fff;border:1px solid '+(isT5?'#C9A84C':'#e8e8e8')+';border-radius:10px;padding:10px 12px;'+(isT5?'box-shadow:0 0 8px #C9A84C44;':'')+'">'
+      // Header row
+      + '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">'
+      + '<div style="width:40px;height:40px;border-radius:8px;background:'+tbg+';display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">'+(isT5?'<span style="filter:drop-shadow(0 0 4px #C9A84C)">🚗</span>':'🚗')+'</div>'
+      + '<div style="flex:1;min-width:0;">'
+      + '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:14px;color:#111;letter-spacing:.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+car.name+'</div>'
+      + '<div style="display:flex;gap:4px;align-items:center;margin-top:2px;">'
+      + '<span style="font-family:\'Oswald\',sans-serif;font-size:8px;font-weight:700;background:'+tbg+';color:'+tc+';padding:1px 6px;border-radius:3px;">T'+t+'</span>'
+      + '<span style="font-family:\'Oswald\',sans-serif;font-size:8px;color:#aaa;">⚡ '+car.hiz+' km/h</span>'
+      + '<span style="font-family:\'Oswald\',sans-serif;font-size:8px;color:#aaa;">· '+src.kaynak+'</span>'
+      + '</div>'
+      + '</div>'
+      + '</div>'
+      // Aksiyon butonları
+      + '<div style="display:flex;gap:5px;">'
+      + '<button onclick="garajSat('+id+')" style="flex:1;padding:6px 4px;border:1px solid #e0e0e0;background:#fff;border-radius:6px;font-family:\'Oswald\',sans-serif;font-size:9px;font-weight:700;color:#555;cursor:pointer;">💰 SAT<br><span style="font-size:8px;color:#22c55e;">'+fmtMoney(car.satis)+'</span></button>'
+      + '<button onclick="garajKullan('+id+')" style="flex:1;padding:6px 4px;border:1px solid #111;background:#111;border-radius:6px;font-family:\'Oswald\',sans-serif;font-size:9px;font-weight:700;color:#fff;cursor:pointer;">🎯 KULLAN<br><span style="font-size:8px;color:#aaa;">Heist / OC</span></button>'
+      + '<button onclick="garajCrush('+id+')" style="flex:1;padding:6px 4px;border:1px solid '+(PLAYER_IS_DON?'#ef4444':'#e0e0e0')+';background:'+(PLAYER_IS_DON?'#fff0f0':'#f9f9f9')+';border-radius:6px;font-family:\'Oswald\',sans-serif;font-size:9px;font-weight:700;color:'+(PLAYER_IS_DON?'#ef4444':'#ccc')+';cursor:pointer;">🔧 EZ<br><span style="font-size:8px;color:'+(PLAYER_IS_DON?'#ef4444':'#ccc')+' ;">20 MERMİ</span></button>'
+      + '</div>'
+      + '</div>';
+  }).join('');
+}
+
+function garajSat(id) {
+  var car = ALL_CARS[id];
+  if (!car) return;
+  if (!confirm(car.name + ' sat — ' + fmtMoney(car.satis) + '?')) return;
+  delete PLAYER_DATA.garaj[id];
+  renderGaraj();
+}
+
+function garajKullan(id) {
+  var car = ALL_CARS[id];
+  alert('🎯 ' + car.name + ' seçildi — Heist veya OC başlatırken kullanılacak.');
+}
+
+function garajCrush(id) {
+  if (!PLAYER_IS_DON) { alert('⚠ Crush için Don veya Consigliere unvanı gerekli.'); return; }
+  var car = ALL_CARS[id];
+  if (!confirm(car.name + ' ez → 20 mermi kazan?')) return;
+  delete PLAYER_DATA.garaj[id];
+  renderGaraj();
+  alert('🔧 ' + car.name + ' ezildi — 20 mermi kazandın!');
+}
+
+// Tab hook'a ekle
+var _origSwitchTab2 = switchTab;
+switchTab = function(id) {
+  _origSwitchTab2(id);
+  if (id === 'garaj') renderGaraj();
+};
+
+renderGaraj();
+
+
+</script>
+</body>
+</html>
