@@ -1,0 +1,1289 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>CASINO</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#444;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100dvh;font-family:'Oswald',sans-serif;gap:10px;}
+.demo-row{display:flex;gap:6px;justify-content:center;padding:8px;}
+.open-btn{padding:8px 18px;background:rgba(0,0,0,.5);color:#fff;border:1px solid rgba(255,255,255,.3);font-family:'Oswald',sans-serif;font-weight:700;font-size:14px;letter-spacing:1px;cursor:pointer;}
+
+/* POPUP */
+#ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:10000;}
+#pop{display:none;position:fixed;inset:0;background:#fff;flex-direction:column;overflow:hidden;z-index:10001;}
+#pop.open{display:flex;animation:su .25s cubic-bezier(.4,0,.2,1);}
+@keyframes su{from{transform:translateY(100%);}to{transform:translateY(0);}}
+
+/* HEADER */
+#hd{height:64px;flex-shrink:0;background:#fff;border-bottom:3px double #111;display:flex;align-items:center;padding:0 10px;position:relative;}
+#hd .center{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;}
+#hd .center img{height:54px;max-width:180px;object-fit:contain;}
+#hd .r{margin-left:auto;display:flex;align-items:center;gap:2px;position:relative;z-index:1;}
+#hd .ib{background:none;border:none;cursor:pointer;padding:2px;display:flex;align-items:center;}
+#hd .ib img{width:22px;height:22px;object-fit:contain;}
+
+/* BAL STRIP - kompakt */
+#bal-strip{display:flex;border-bottom:1px solid #eee;flex-shrink:0;height:26px;align-items:center;}
+.bal-item{flex:1;display:flex;align-items:center;justify-content:center;gap:5px;border-right:1px solid #eee;height:100%;}
+.bal-item:last-child{border-right:none;}
+.bal-lbl{font-family:'Oswald',sans-serif;font-weight:600;font-size:9px;color:#888;letter-spacing:.5px;}
+.bal-val{font-family:'Oswald',sans-serif;font-weight:700;font-size:12px;color:#111;}
+.bal-val.green{color:#16a34a;}
+
+/* CONTENT */
+#content{flex:1;overflow:hidden;position:relative;min-height:0;}
+
+/* GAME GRID */
+#game-grid{position:absolute;inset:0;background:#fff;display:flex;flex-direction:column;padding:8px 10px;gap:6px;overflow:hidden;}
+.grid-lbl{font-family:'Oswald',sans-serif;font-weight:700;font-size:10px;color:#B8860B;letter-spacing:1.5px;display:block;padding-bottom:5px;border-bottom:1px solid #eee;flex-shrink:0;}
+.game-cards{display:grid;grid-template-columns:1fr 1fr;gap:6px;flex:1;}
+.game-card{border:1.5px solid #ddd;padding:8px 6px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;position:relative;transition:border-color .12s;}
+.game-card:active{background:#fafafa;}
+.game-card.locked{opacity:.45;cursor:default;}
+.game-card.coming{opacity:.35;cursor:default;}
+.gc-ico{font-size:22px;line-height:1;}
+.gc-name{font-family:'Oswald',sans-serif;font-weight:700;font-size:13px;color:#111;letter-spacing:.3px;text-align:center;}
+.gc-sub{font-family:'Oswald',sans-serif;font-weight:600;font-size:9px;color:#888;letter-spacing:.3px;text-align:center;}
+.gc-min{font-family:'Oswald',sans-serif;font-weight:700;font-size:10px;color:#16a34a;}
+.gc-lock{position:absolute;top:5px;right:7px;font-size:12px;color:#bbb;}
+.gc-badge{position:absolute;top:5px;left:7px;background:#111;padding:1px 5px;}
+.gc-badge-txt{font-family:'Oswald',sans-serif;font-weight:700;font-size:8px;color:#C9A84C;letter-spacing:1px;}
+
+/* GAME SCREEN */
+#game-screen{position:absolute;inset:0;display:none;flex-direction:column;background:#fff;}
+#game-screen.on{display:flex;}
+.gs-bar{display:flex;align-items:center;padding:0 12px;height:34px;border-bottom:1px solid #eee;flex-shrink:0;gap:10px;}
+.gs-back{background:none;border:none;cursor:pointer;font-family:'Oswald',sans-serif;font-weight:700;font-size:12px;color:#888;letter-spacing:.5px;}
+.gs-back:hover{color:#111;}
+.gs-name{font-family:'Oswald',sans-serif;font-weight:700;font-size:15px;color:#111;flex:1;text-align:center;letter-spacing:.5px;}
+.gs-cash{font-family:'Oswald',sans-serif;font-weight:700;font-size:12px;color:#16a34a;}
+.gs-body{flex:1;overflow-y:auto;padding:8px 12px;display:flex;flex-direction:column;min-height:0;gap:0;}
+.gs-body::-webkit-scrollbar{width:2px;}
+.gs-body::-webkit-scrollbar-thumb{background:#ddd;}
+.gs-body.no-scroll{overflow:hidden;}
+
+/* SHARED GAME STYLES */
+.sec-lbl{font-family:'Oswald',sans-serif;font-weight:700;font-size:10px;color:#B8860B;letter-spacing:1.5px;display:block;margin-bottom:4px;margin-top:6px;padding-bottom:3px;border-bottom:1px solid #eee;}
+.sec-lbl:first-child{margin-top:0;}
+.chips{display:flex;gap:4px;margin-bottom:6px;}
+.chip{flex:1;height:32px;border-radius:16px;border:2px solid;display:flex;align-items:center;justify-content:center;cursor:pointer;font-family:'Oswald',sans-serif;font-weight:700;font-size:9px;transition:box-shadow .12s;}
+.chip.sel{box-shadow:0 0 0 2px #111;}
+.chip.r{background:#fff0f0;border-color:#dc2626;color:#dc2626;}
+.chip.g{background:#f0faf0;border-color:#16a34a;color:#16a34a;}
+.chip.b{background:#f0f4ff;border-color:#1d4ed8;color:#1d4ed8;}
+.chip.p{background:#f8f0ff;border-color:#7e22ce;color:#7e22ce;}
+.chip.k{background:#fffbf0;border-color:#B8860B;color:#B8860B;}
+.bet-wrap{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;padding:5px 8px;background:#f8f8f8;border:1px solid #eee;}
+.bet-lbl{font-family:'Oswald',sans-serif;font-weight:600;font-size:10px;color:#888;letter-spacing:.5px;}
+.bet-val{font-family:'Oswald',sans-serif;font-weight:700;font-size:20px;color:#111;}
+.result-box{text-align:center;padding:6px;border:1px solid #eee;margin:5px 0;background:#fafafa;flex-shrink:0;}
+.res-txt{font-family:'Oswald',sans-serif;font-weight:700;font-size:14px;letter-spacing:.5px;}
+.res-txt.win{color:#16a34a;}
+.res-txt.lose{color:#dc2626;}
+.res-txt.push{color:#B8860B;}
+.btn-main{width:100%;padding:10px;border:none;background:#111;color:#fff;font-family:'Oswald',sans-serif;font-weight:700;font-size:14px;letter-spacing:2px;cursor:pointer;flex-shrink:0;}
+.btn-main:disabled{background:#e0e0e0;color:#aaa;cursor:default;}
+.btn-row{display:flex;gap:5px;margin-top:4px;flex-shrink:0;}
+.btn-sec{flex:1;padding:9px;border:1.5px solid #111;background:#fff;color:#111;font-family:'Oswald',sans-serif;font-weight:700;font-size:11px;letter-spacing:1px;cursor:pointer;}
+.btn-sec:disabled{opacity:.35;cursor:default;}
+
+/* KART */
+.card{width:38px;height:54px;border:1.5px solid #ddd;background:#fff;display:flex;flex-direction:column;padding:3px;border-radius:2px;}
+.card.back{background:#111;border-color:#111;}
+.card.red .cv,.card.red .cs{color:#dc2626;}
+.card.black .cv,.card.black .cs{color:#111;}
+.cv{font-family:'Oswald',sans-serif;font-weight:700;font-size:13px;line-height:1;}
+.cs{font-family:'Oswald',sans-serif;font-size:10px;line-height:1;margin-top:auto;}
+.card-area{display:flex;gap:4px;min-height:60px;align-items:center;flex-wrap:wrap;margin-bottom:6px;}
+.score-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;}
+.score-lbl{font-family:'Oswald',sans-serif;font-weight:600;font-size:10px;color:#888;letter-spacing:.5px;}
+.score-val{font-family:'Oswald',sans-serif;font-weight:700;font-size:20px;color:#111;}
+
+/* SLOT — torn beyaz */
+.slot-wrap{display:flex;flex-direction:column;height:100%;}
+.slot-jackpot{background:#111;border-radius:3px;padding:5px 10px;text-align:center;margin-bottom:6px;flex-shrink:0;}
+.slot-jackpot-lbl{font-family:'Oswald',sans-serif;font-weight:600;font-size:8px;color:#C9A84C;letter-spacing:3px;display:block;}
+.slot-jackpot-val{font-family:'Oswald',sans-serif;font-weight:700;font-size:20px;color:#FFD700;display:block;line-height:1.1;}
+.slot-machine{background:#fff;border:2px solid #111;border-radius:3px;padding:8px;margin-bottom:6px;flex-shrink:0;position:relative;}
+.slot-machine::before{content:'LA FAMILIA CASINO';position:absolute;top:-9px;left:50%;transform:translateX(-50%);background:#fff;padding:0 8px;font-family:'Oswald',sans-serif;font-weight:700;font-size:8px;color:#111;letter-spacing:2px;white-space:nowrap;}
+.slot-window{position:relative;display:flex;gap:4px;height:180px;background:#f8f8f8;border:1px solid #e0e0e0;padding:4px;}
+.slot-payline-top{position:absolute;top:60px;left:0;right:0;height:1px;background:#eee;pointer-events:none;z-index:2;}
+.slot-payline-bot{position:absolute;top:120px;left:0;right:0;height:1px;background:#eee;pointer-events:none;z-index:2;}
+.slot-payline-mid{position:absolute;top:89px;left:-2px;right:-2px;height:2px;background:#C9A84C;z-index:3;pointer-events:none;}
+.slot-payline-mid::before{content:'';position:absolute;left:0;right:0;top:-10px;height:22px;background:rgba(201,168,76,.07);pointer-events:none;}
+.slot-reel-wrap{flex:1;overflow:hidden;position:relative;}
+.slot-reel-inner{display:flex;flex-direction:column;will-change:transform;}
+.slot-sym{width:100%;height:60px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;gap:1px;}
+.slot-sym-lbl{font-family:'Oswald',sans-serif;font-weight:700;font-size:7px;color:#bbb;letter-spacing:1px;text-align:center;}
+.slot-sym.hl{background:rgba(201,168,76,.15);}
+.slot-bets{display:flex;gap:4px;margin-bottom:6px;flex-shrink:0;}
+.slot-chip{flex:1;padding:5px 2px;border:1.5px solid #ddd;background:#fff;font-family:'Oswald',sans-serif;font-weight:700;font-size:10px;color:#111;cursor:pointer;text-align:center;border-radius:2px;}
+.slot-chip.sel{background:#111;color:#fff;border-color:#111;}
+.slot-paytable{background:#f8f8f8;border:1px solid #eee;padding:5px 8px;margin-bottom:6px;flex-shrink:0;}
+.slot-pay-row{display:flex;justify-content:space-between;align-items:center;padding:2px 0;border-bottom:1px solid #f0f0f0;}
+.slot-pay-row:last-child{border:none;}
+.slot-pay-sym{font-size:13px;letter-spacing:2px;}
+.slot-pay-val{font-family:'Oswald',sans-serif;font-weight:700;font-size:11px;}
+
+/* RULET — çark */
+.rou-wrap{display:flex;flex-direction:column;height:100%;overflow-y:auto;}
+.rou-wrap::-webkit-scrollbar{width:2px;}
+.rou-wrap::-webkit-scrollbar-thumb{background:#ddd;}
+.rou-canvas-wrap{display:flex;flex-direction:column;align-items:center;padding:6px 0 3px;flex-shrink:0;border-bottom:1px solid #eee;background:#fafafa;}
+.rou-result-txt{font-family:'Oswald',sans-serif;font-weight:700;font-size:12px;color:#888;letter-spacing:1px;margin-top:3px;min-height:16px;text-align:center;}
+.rou-result-txt.red{color:#dc2626;}.rou-result-txt.black{color:#111;}.rou-result-txt.green{color:#16a34a;}
+.rou-chip-row{display:flex;gap:4px;margin-bottom:5px;}
+.rou-chip{width:34px;height:34px;border-radius:50%;border:2px solid;display:flex;align-items:center;justify-content:center;cursor:pointer;font-family:'Oswald',sans-serif;font-weight:700;font-size:7px;transition:box-shadow .12s;flex-shrink:0;}
+.rou-chip.on{box-shadow:0 0 0 2px #111;}
+.rou-out-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:3px;margin-bottom:5px;}
+.rou-out{padding:6px 3px;border:1.5px solid #ddd;text-align:center;cursor:pointer;position:relative;background:#fff;}
+.rou-out.has-bet{border-color:#C9A84C;}
+.rou-out.rbg{background:#dc2626;}.rou-out.bbg{background:#111;}
+.rou-out-l{font-family:'Oswald',sans-serif;font-weight:700;font-size:10px;color:#111;display:block;}
+.rou-out.rbg .rou-out-l,.rou-out.bbg .rou-out-l{color:#fff;}
+.rou-out-o{font-family:'Oswald',sans-serif;font-weight:600;font-size:8px;color:#aaa;display:block;}
+.rou-out.rbg .rou-out-o,.rou-out.bbg .rou-out-o{color:rgba(255,255,255,.5);}
+.rou-badge{position:absolute;top:-5px;right:-3px;background:#111;color:#C9A84C;font-family:'Oswald',sans-serif;font-weight:700;font-size:7px;padding:1px 3px;border-radius:8px;display:none;}
+.rou-out.has-bet .rou-badge{display:block;}
+.rou-num-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:2px;margin-bottom:5px;}
+.rou-num{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-family:'Oswald',sans-serif;font-weight:700;font-size:7px;cursor:pointer;position:relative;border:1px solid transparent;}
+.rou-num.nr{background:#dc2626;color:#fff;}.rou-num.nb{background:#111;color:#fff;}.rou-num.ng{background:#16a34a;color:#fff;}
+.rou-num.has-bet{border:2px solid #FFD700;}
+.rou-nbadge{position:absolute;top:-4px;right:-2px;background:#FFD700;color:#111;font-size:5px;padding:0 2px;border-radius:6px;font-family:'Oswald',sans-serif;font-weight:700;display:none;}
+.rou-num.has-bet .rou-nbadge{display:block;}
+.rou-ab-row{display:flex;justify-content:space-between;align-items:center;padding:2px 5px;background:#f8f8f8;border:1px solid #eee;margin-bottom:2px;}
+.rou-ab-lbl{font-family:'Oswald',sans-serif;font-weight:600;font-size:9px;color:#111;}
+.rou-ab-val{font-family:'Oswald',sans-serif;font-weight:700;font-size:10px;color:#C9A84C;}
+.rou-ab-del{background:none;border:none;cursor:pointer;font-size:11px;color:#dc2626;padding:0 2px;}
+.rou-total{display:flex;justify-content:space-between;align-items:center;padding:4px 6px;background:#111;margin-bottom:4px;flex-shrink:0;}
+.rou-total-l{font-family:'Oswald',sans-serif;font-weight:600;font-size:9px;color:#aaa;}
+.rou-total-v{font-family:'Oswald',sans-serif;font-weight:700;font-size:13px;color:#C9A84C;}
+.rou-act{display:flex;gap:4px;flex-shrink:0;padding:5px 0 0;}
+.rou-clear{padding:10px 12px;border:1.5px solid #ddd;background:#fff;color:#888;font-family:'Oswald',sans-serif;font-weight:700;font-size:11px;cursor:pointer;flex-shrink:0;}
+.rou-spin{flex:1;padding:10px;border:none;background:#111;color:#fff;font-family:'Oswald',sans-serif;font-weight:700;font-size:13px;letter-spacing:2px;cursor:pointer;}
+.rou-spin:disabled{background:#e0e0e0;color:#aaa;cursor:default;}
+
+/* POKER */
+.pk-cards{display:flex;gap:3px;margin-bottom:6px;}
+.cpk{flex:1;height:68px;border:1.5px solid #ddd;background:#fff;display:flex;flex-direction:column;padding:3px;border-radius:2px;cursor:pointer;position:relative;}
+.cpk.held{border-color:#111;background:#f8f8f8;}
+.cpk.held::after{content:'HOLD';position:absolute;bottom:2px;left:0;right:0;text-align:center;font-family:'Oswald',sans-serif;font-weight:700;font-size:7px;color:#111;letter-spacing:.5px;}
+.cpk.red .cv,.cpk.red .cs{color:#dc2626;}
+.cpk.black .cv,.cpk.black .cs{color:#111;}
+.pk-pay{display:grid;grid-template-columns:1fr auto;gap:1px 10px;margin-bottom:8px;padding:8px;background:#fafafa;border:1px solid #eee;}
+.pk-pay-lbl{font-family:'Oswald',sans-serif;font-weight:600;font-size:10px;color:#888;}
+.pk-pay-val{font-family:'Oswald',sans-serif;font-weight:700;font-size:12px;color:#C9A84C;text-align:right;}
+
+/* AT YARISI */
+.race-track{border:1px solid #ddd;overflow:hidden;margin-bottom:8px;background:#f9f9f9;}
+.race-lane{display:flex;align-items:center;height:36px;border-bottom:1px solid #eee;padding:0 6px;position:relative;overflow:hidden;}
+.race-lane:last-child{border-bottom:none;}
+.lane-num{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Oswald',sans-serif;font-weight:700;font-size:10px;color:#fff;flex-shrink:0;}
+.lane-name{font-family:'Oswald',sans-serif;font-weight:600;font-size:10px;color:#888;margin-left:5px;width:54px;flex-shrink:0;}
+.lane-odds{font-family:'Oswald',sans-serif;font-weight:700;font-size:13px;color:#C9A84C;margin-left:auto;flex-shrink:0;position:relative;z-index:1;}
+.racer{position:absolute;left:86px;font-size:20px;transition:left .06s linear;line-height:1;filter:drop-shadow(1px 1px 1px rgba(0,0,0,.2));}
+.race-opts{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px;}
+.race-opt{flex:1;min-width:55px;border:1.5px solid #ddd;padding:7px 4px;cursor:pointer;text-align:center;}
+.race-opt.sel{border-color:#111;background:#f8f8f8;}
+.ro-name{font-family:'Oswald',sans-serif;font-weight:700;font-size:11px;color:#111;display:block;}
+.ro-odds{font-family:'Oswald',sans-serif;font-weight:700;font-size:16px;color:#C9A84C;display:block;}
+
+/* BOTTOM */
+#bot{flex-shrink:0;border-top:3px double #111;}
+#bot button{width:100%;padding:8px;background:#fff;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+#bot button img{width:50px;height:50px;object-fit:contain;}
+#toast{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);font-family:'Oswald',sans-serif;font-weight:700;font-size:12px;letter-spacing:.5px;padding:8px 16px;white-space:nowrap;opacity:0;transition:opacity .2s;pointer-events:none;z-index:200;}
+#toast.show{opacity:1;}
+#toast.win{background:#16a34a;color:#fff;}
+#toast.lose{background:#dc2626;color:#fff;}
+#toast.info{background:#111;color:#fff;}
+
+.bot-sim{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:320px;height:116px;background:#111;display:flex;align-items:center;justify-content:center;z-index:9999;}
+.bot-sim-txt{font-family:'Oswald',sans-serif;font-weight:600;font-size:9px;color:#444;letter-spacing:2px;}
+</style>
+</head>
+<body>
+<div class="demo-row">
+  <button class="open-btn" onclick="acPopup()">CASINO</button>
+</div>
+<div id="ov" onclick="closePop()"></div>
+<div class="bot-sim"><span class="bot-sim-txt">BOTTOM BAR</span></div>
+
+<div id="pop">
+  <div id="hd">
+    <img style="width:35px;height:35px;object-fit:contain;position:relative;z-index:1;" src="https://mericaltinors1983-max.github.io/hustler/nav_casino.png">
+    <div class="center">
+      <img src="https://mericaltinors1983-max.github.io/hustler/lafamilia-2.png">
+    </div>
+    <div class="r">
+      <button class="ib"><img src="https://mericaltinors1983-max.github.io/hustler/info2.png"></button>
+      <button class="ib" onclick="closePop()"><img src="https://mericaltinors1983-max.github.io/hustler/close1.png"></button>
+    </div>
+  </div>
+
+  <div id="bal-strip">
+    <div class="bal-item"><span class="bal-lbl">NAKIT</span><span class="bal-val green" id="bal-nakit">$0</span></div>
+    <div class="bal-item"><span class="bal-lbl">KASA</span><span class="bal-val" id="bal-kasa">$0</span></div>
+    <div class="bal-item"><span class="bal-lbl">SEHIR</span><span class="bal-val" id="bal-sehir">ISTANBUL</span></div>
+  </div>
+
+  <div id="content">
+    <div id="game-grid">
+      <span class="grid-lbl">OYUN SEC</span>
+      <div class="game-cards">
+        <div class="game-card" onclick="openGame('slot2')">
+          <span class="gc-ico">&#127826;</span>
+          <span class="gc-name">LUCKY FRUITS</span>
+          <span class="gc-sub">3 REEL · MEYVE</span>
+          <span class="gc-min">MIN $100</span>
+        </div>
+        <div class="game-card" onclick="openGame('slot3')">
+          <span class="gc-ico">&#127920;</span>
+          <span class="gc-name">5 REEL DELUXE</span>
+          <span class="gc-sub">5 REEL · 3 PAYLINE</span>
+          <span class="gc-min">MIN $100</span>
+        </div>
+        <div class="game-card" onclick="openGame('blackjack')">
+          <span class="gc-ico">&#127183;</span>
+          <span class="gc-name">BLACKJACK</span>
+          <span class="gc-sub">DEALER 17DE DURUR</span>
+          <span class="gc-min">MIN $100</span>
+        </div>
+        <div class="game-card" onclick="openGame('rulet')">
+          <span class="gc-ico">&#9899;</span>
+          <span class="gc-name">RULET</span>
+          <span class="gc-sub">AVRUPA 0-36</span>
+          <span class="gc-min">MIN $100</span>
+        </div>
+        <div class="game-card" onclick="openGame('poker')">
+          <span class="gc-ico">&#9824;</span>
+          <span class="gc-name">VIDEO POKER</span>
+          <span class="gc-sub">JACKS OR BETTER</span>
+          <span class="gc-min">MIN $100</span>
+        </div>
+        <div class="game-card" onclick="openGame('race')">
+          <span class="gc-ico">&#127943;</span>
+          <span class="gc-name">AT YARISI</span>
+          <span class="gc-sub">6 AT · RANDOM ODDS</span>
+          <span class="gc-min">MIN $100</span>
+        </div>
+        <div class="game-card" onclick="openGame('boks')">
+          <span class="gc-ico">&#129354;</span>
+          <span class="gc-name">BOKS</span>
+          <span class="gc-sub">2 DOVUSCU · RANDOM ODDS</span>
+          <span class="gc-min">MIN $100</span>
+        </div>
+      </div>
+    </div>
+
+    <div id="game-screen">
+      <div class="gs-bar">
+        <button class="gs-back" onclick="closeGame()">&#8592; GERI</button>
+        <span class="gs-name" id="gs-name">-</span>
+        <span class="gs-cash" id="gs-cash">$0</span>
+      </div>
+      <div class="gs-body" id="gs-body"></div>
+    </div>
+  </div>
+
+  <div id="bot">
+    <button onclick="closePop()">
+      <img src="https://mericaltinors1983-max.github.io/hustler/close_icon.png">
+    </button>
+  </div>
+  <div id="toast"></div>
+</div>
+
+<script>
+var BASE='https://mericaltinors1983-max.github.io/hustler/';
+function imgErr(el){el.style.display='none';}
+var BAL = 5842500;
+var KASA = 2500000;
+var JACKPOT = 500000;   // Shared pool — slot + rulet %5'i buraya gider
+var FAMILY_CUT = 0.02; // Şehri kontrol eden aile payı (%2 standart, Sicilya/NY %3)
+
+// ── KASA MEKANİĞİ ──────────────────────────────────────
+function kasaKazandi(bet) {
+  // Oyuncu kaybetti → %98 kasaya, %2 aile kasasına
+  KASA += Math.floor(bet * (1 - FAMILY_CUT));
+  upBal();
+}
+function kasaOdedi(netKar) {
+  // Oyuncu kazandı → net kar kasadan çıkar
+  KASA -= netKar;
+  upBal();
+}
+function kasaYeterli(maxPayout) {
+  return KASA >= maxPayout;
+}
+var SUITS = ['&#9824;','&#9829;','&#9830;','&#9827;'];
+var VALS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+var RRED = [1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36];
+var raceTimer = null;
+
+function fmt(n){return Math.floor(n).toLocaleString('en-US');}
+
+function upBal(){
+  document.getElementById('bal-nakit').textContent='$'+fmt(BAL);
+  document.getElementById('bal-kasa').textContent='$'+fmt(KASA);
+  var g=document.getElementById('gs-cash');if(g)g.textContent='$'+fmt(BAL);
+}
+
+function acPopup(){
+  upBal();
+  document.getElementById('ov').style.display='block';
+  document.getElementById('pop').classList.add('open');
+}
+function closePop(){
+  document.getElementById('ov').style.display='none';
+  document.getElementById('pop').classList.remove('open');
+  closeGame();
+}
+
+var GAMES = {slot2:'LUCKY FRUITS',slot3:'5 REEL DELUXE',blackjack:'BLACKJACK',rulet:'RULET',poker:'VIDEO POKER',race:'AT YARISI',boks:'BOKS'};
+
+function openGame(id){
+  if(KASA<=0){toast('CASINO CLOSED — Owner needs to fund','lose');return;}
+  document.getElementById('game-grid').style.display='none';
+  document.getElementById('game-screen').classList.add('on');
+  document.getElementById('gs-name').textContent=GAMES[id]||id.toUpperCase();
+  upBal();
+  var b=document.getElementById('gs-body');
+  b.innerHTML='';
+  b.classList.remove('no-scroll');
+  if(id==='slot2'||id==='slot3') b.classList.add('no-scroll');
+  if(id==='slot2')     renderSlot2(b);
+  if(id==='slot3')     renderSlot3(b);
+  if(id==='blackjack') renderBJ(b);
+  if(id==='rulet')     renderRoulet(b);
+  if(id==='poker')     renderPoker(b);
+  if(id==='race')      renderRace(b);
+  if(id==='boks')      renderBoks(b);
+}
+
+function closeGame(){
+  document.getElementById('game-grid').style.display='block';
+  document.getElementById('game-screen').classList.remove('on');
+  document.getElementById('gs-body').innerHTML='';
+  raceTimer&&clearInterval(raceTimer);
+}
+
+/* ── SLOT ── */
+var SLOT_SYMS = [
+  {id:'dollar',  e:'&#128178;', n:'DOLLAR',   w:30, pay:2 },
+  {id:'money',   e:'&#128176;', n:'MONEY',    w:25, pay:3 },
+  {id:'whisky',  e:'&#129346;', n:'WHISKY',   w:20, pay:4 },
+  {id:'diamond', e:'&#128142;', n:'DIAMOND',  w:15, pay:8 },
+  {id:'seven',   e:'7',        n:'SEVEN',    w:7,  pay:15},
+  {id:'crown',   e:'&#128081;', n:'GODFATHER',w:3,  pay:'JACKPOT'},
+];
+// JACKPOT global olarak tanımlı (yukarıda) — slot + rulet paylaşır
+var slotBet = 500;
+var slotSpin = false;
+var SYM_H = 60;
+
+function slotWeighted(){
+  var total=SLOT_SYMS.reduce(function(s,x){return s+x.w;},0);
+  var r=Math.random()*total;
+  for(var i=0;i<SLOT_SYMS.length;i++){r-=SLOT_SYMS[i].w;if(r<=0)return i;}
+  return 0;
+}
+
+function buildStrip(){
+  // 3 set + buffer — smooth animation
+  var all='';
+  for(var rep=0;rep<4;rep++){
+    for(var i=0;i<SLOT_SYMS.length;i++){
+      var s=SLOT_SYMS[i];
+      all+='<div class="slot-sym"><span style="font-size:26px;line-height:1;">'+(s.id==='seven'?'<span style="color:#dc2626;font-family:Oswald,sans-serif;font-weight:900;font-size:30px;">7</span>':s.e)+'</span>'+
+           '<span class="slot-sym-lbl">'+s.n+'</span></div>';
+    }
+  }
+  return all;
+}
+
+function renderSlot(b){
+  var payHtml = SLOT_SYMS.map(function(s){
+    var col = s.id==='crown'?'#B8860B':s.id==='seven'?'#dc2626':'#111';
+    var valTxt = s.pay==='JACKPOT'?'★ JACKPOT':s.pay+'x';
+    return '<div class="slot-pay-row">'+
+      '<span class="slot-pay-sym">'+(s.id==='seven'?'<span style="color:#dc2626;font-weight:900;">7 7 7</span>':(s.e+' '+s.e+' '+s.e))+'</span>'+
+      '<span class="slot-pay-val" style="color:'+col+';">'+valTxt+'</span>'+
+    '</div>';
+  }).join('');
+
+  var stripHtml = buildStrip();
+
+  b.innerHTML=
+    '<div class="slot-wrap">'+
+    '<div class="slot-jackpot">'+
+      '<span class="slot-jackpot-lbl">JACKPOT</span>'+
+      '<span class="slot-jackpot-val" id="jackpot-val">$'+fmt(JACKPOT)+'</span>'+
+    '</div>'+
+    '<div class="slot-machine">'+
+      '<div class="slot-window">'+
+        '<div class="slot-payline-top"></div>'+
+        '<div class="slot-payline-mid"></div>'+
+        '<div class="slot-payline-bot"></div>'+
+        [0,1,2].map(function(i){
+          return '<div class="slot-reel-wrap"><div class="slot-reel-inner" id="sr'+i+'">'+stripHtml+'</div></div>';
+        }).join('')+
+      '</div>'+
+    '</div>'+
+    '<div class="result-box"><span class="res-txt" id="slot-res">CEVİR BASLAT</span></div>'+
+    '<span class="sec-lbl" style="margin-top:2px;">BAHİS SEC</span>'+
+    '<div class="slot-bets">'+
+    ['$100','$500','$1K','$5K','$10K'].map(function(l,i){
+      var v=[100,500,1000,5000,10000][i];
+      return '<div class="slot-chip'+(v===slotBet?' sel':'')+'" onclick="slotSetBet('+v+',this)">'+l+'</div>';
+    }).join('')+'</div>'+
+    '<div class="slot-paytable">'+payHtml+'</div>'+
+    '<button class="btn-main" id="spin-btn" onclick="doSpin()">CEVIR — $'+fmt(slotBet)+'</button>'+
+    '</div>';
+
+  // Baslangic pozisyonu: ilk sembol ortada
+  [0,1,2].forEach(function(i){
+    var strip=document.getElementById('sr'+i);
+    if(strip) strip.style.transform='translateY(-'+SYM_H+'px)';
+  });
+}
+
+function slotSetBet(v,el){
+  slotBet=v;
+  document.querySelectorAll('.slot-chip').forEach(function(c){c.classList.remove('sel');});
+  el.classList.add('sel');
+  var btn=document.getElementById('spin-btn');if(btn)btn.textContent='CEVIR — $'+fmt(v);
+  // jackpot biraz artar
+  JACKPOT+=Math.floor(v*0.05);
+  var jv=document.getElementById('jackpot-val');if(jv)jv.textContent='$'+fmt(JACKPOT);
+}
+
+function doSpin(){
+  if(slotSpin)return;
+  if(slotBet>BAL){toast('Yetersiz bakiye','lose');return;}
+  BAL-=slotBet;
+  JACKPOT+=Math.floor(slotBet*0.05);
+  var jv=document.getElementById('jackpot-val');if(jv)jv.textContent='$'+fmt(JACKPOT);
+  upBal();slotSpin=true;
+  var btn=document.getElementById('spin-btn');if(btn)btn.disabled=true;
+  var res=document.getElementById('slot-res');if(res){res.textContent='...';res.className='res-txt';}
+
+  var N=SLOT_SYMS.length; // 6
+  var targets=[slotWeighted(),slotWeighted(),slotWeighted()];
+
+  // Her reel icin ayri interval
+  var strips=[
+    document.getElementById('sr0'),
+    document.getElementById('sr1'),
+    document.getElementById('sr2')
+  ];
+
+  var finished=[false,false,false];
+
+  function spinReel(ri){
+    var strip=strips[ri];
+    if(!strip)return;
+    var steps=0;
+    var maxSteps=N*4+ri*N+Math.floor(Math.random()*3);
+    var iv=setInterval(function(){
+      steps++;
+      var idx=steps%N;
+      strip.style.transform='translateY(-'+((idx+1)*SYM_H)+'px)';
+      if(steps>=maxSteps){
+        clearInterval(iv);
+        var fi=targets[ri];
+        // Payline = middle row (y=60-120 of window)
+        // Mid row shows strip at T+60. For symbol fi in rep1: T+60 = (N+fi)*60 → T = (N-1+fi)*60
+        var finalPos=(N-1+fi)*SYM_H;
+        strip.style.transition='transform 0.3s ease-out';
+        strip.style.transform='translateY(-'+finalPos+'px)';
+        setTimeout(function(){
+          strip.style.transition='';
+          finished[ri]=true;
+          if(finished[0]&&finished[1]&&finished[2]){
+            finSpin(targets);
+          }
+        },320);
+      }
+    },50);
+  }
+
+  spinReel(0);
+  setTimeout(function(){spinReel(1);},250);
+  setTimeout(function(){spinReel(2);},500);
+}
+
+function finSpin(r){
+  slotSpin=false;
+  var btn=document.getElementById('spin-btn');if(btn)btn.disabled=false;
+  var s0=SLOT_SYMS[r[0]],s1=SLOT_SYMS[r[1]],s2=SLOT_SYMS[r[2]];
+  var res=document.getElementById('slot-res');
+  if(s0.id===s1.id&&s1.id===s2.id){
+    if(s0.pay==='JACKPOT'){
+      var jp=JACKPOT;BAL+=jp;JACKPOT=500000;upBal();
+      var jv=document.getElementById('jackpot-val');if(jv)jv.textContent='$'+fmt(JACKPOT);
+      if(res){res.textContent='JACKPOT! +$'+fmt(jp);res.className='res-txt win';}
+      toast('+$'+fmt(jp),'win');
+    } else {
+      var netKar=slotBet*(s0.pay-1);
+      BAL+=slotBet*s0.pay;kasaOdedi(netKar);
+      if(res){res.textContent=s0.n+' '+s0.pay+'x  +$'+fmt(netKar);res.className='res-txt win';}
+      toast('+$'+fmt(netKar),'win');
+    }
+  } else {
+    kasaKazandi(slotBet);
+    if(res){res.textContent='ESLESME YOK';res.className='res-txt lose';}
+    toast('-$'+fmt(slotBet),'lose');
+  }
+}
+
+/* ── SLOT 2: LUCKY FRUITS ── */
+var S2={
+  syms:[
+    {id:'cherry', e:'&#127826;',n:'KIRAZ',  w:30,pay:2, col:'#dc2626'},
+    {id:'lemon',  e:'&#127819;',n:'LIMON',  w:25,pay:3, col:'#d97706'},
+    {id:'orange', e:'&#127818;',n:'PORTAKAL',w:20,pay:4,col:'#ea580c'},
+    {id:'grape',  e:'&#127815;',n:'UZUM',   w:15,pay:6, col:'#7e22ce'},
+    {id:'melon',  e:'&#127816;',n:'KAVUN',  w:7, pay:10,col:'#16a34a'},
+    {id:'star',   e:'&#11088;', n:'YILDIZ', w:3, pay:'JP',col:'#C9A84C'},
+  ],
+  bet:500, spin:false, SH:52
+};
+function s2wRand(){var tot=S2.syms.reduce(function(a,x){return a+x.w;},0),r=Math.random()*tot;for(var i=0;i<S2.syms.length;i++){r-=S2.syms[i].w;if(r<=0)return i;}return 0;}
+
+function renderSlot2(b){
+  JACKPOT+=Math.floor(S2.bet*0.05);
+  var N=S2.syms.length;
+  var stripHtml='';
+  var symFiles={cherry:'slot_sym_cherry',lemon:'slot_sym_lemon',orange:'slot_sym_orange',grape:'slot_sym_grape',melon:'slot_sym_diamond',star:'slot_sym_star'};
+  for(var rep=0;rep<4;rep++){S2.syms.forEach(function(s){
+    stripHtml+='<div style="height:'+S2.SH+'px;display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;">'+
+      '<span style="font-size:22px;line-height:1;">'+s.e+'</span>'+
+      '<span style="font-family:Oswald,sans-serif;font-weight:700;font-size:7px;color:'+s.col+';letter-spacing:.5px;">'+s.n+'</span></div>';
+  });}
+  var symFiles2={cherry:'slot_sym_cherry',lemon:'slot_sym_lemon',orange:'slot_sym_orange',grape:'slot_sym_grape',melon:'slot_sym_diamond',star:'slot_sym_star'};
+  var payHtml=S2.syms.map(function(s){
+    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:2px 0;border-bottom:1px solid #f0f0f0;">'+
+      '<span style="font-size:11px;letter-spacing:2px;">'+s.e+' '+s.e+' '+s.e+'</span>'+
+      '<span style="font-family:Oswald,sans-serif;font-weight:700;font-size:11px;color:'+s.col+';">'+(s.pay==='JP'?'★ JP':s.pay+'x')+'</span></div>';
+  }).join('');
+  var betHtml=[100,500,1000,5000,10000].map(function(v){
+    var l='$'+(v>=1000?(v/1000)+'K':v);
+    return '<div class="slot-chip'+(v===S2.bet?' sel':'')+'" onclick="s2SetBet('+v+',this)">'+l+'</div>';
+  }).join('');
+  b.innerHTML=
+    '<div style="background:#111;padding:5px 10px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">'+
+      '<span style="font-family:Oswald,sans-serif;font-weight:700;font-size:9px;color:#C9A84C;letter-spacing:3px;">JACKPOT</span>'+
+      '<span style="font-family:Oswald,sans-serif;font-weight:700;font-size:18px;color:#FFD700;" id="s2-jp">$'+fmt(JACKPOT)+'</span></div>'+
+    '<div style="border:2px solid #111;position:relative;flex-shrink:0;overflow:hidden;">'+
+      '<div style="position:absolute;top:'+(S2.SH-1)+'px;left:0;right:0;height:1px;background:#eee;z-index:2;pointer-events:none;"></div>'+
+      '<div style="position:absolute;top:'+(S2.SH*2-1)+'px;left:0;right:0;height:1px;background:#eee;z-index:2;pointer-events:none;"></div>'+
+      '<div style="position:absolute;top:'+(S2.SH-1)+'px;left:0;right:0;height:'+S2.SH+'px;border-top:2px solid #C9A84C;border-bottom:2px solid #C9A84C;background:rgba(201,168,76,.05);z-index:3;pointer-events:none;"></div>'+
+      '<div style="display:flex;height:'+(S2.SH*3)+'px;overflow:hidden;">'+
+        [0,1,2].map(function(i){
+          return '<div style="flex:1;overflow:hidden;border-right:'+(i<2?'1px solid #eee':'none')+';background:'+(i===0?'#fffafa':i===1?'#fffff8':'#fafffe')+';position:relative;">'+
+            '<div id="s2r'+i+'" style="display:flex;flex-direction:column;will-change:transform;">'+stripHtml+'</div></div>';
+        }).join('')+
+      '</div>'+
+    '</div>'+
+    '<div class="result-box" style="flex-shrink:0;"><span class="res-txt" id="s2-res">CEVIR BASLAT</span></div>'+
+    '<div class="slot-bets" style="flex-shrink:0;">'+betHtml+'</div>'+
+    '<div style="background:#f8f8f8;border:1px solid #eee;padding:4px 8px;flex-shrink:0;">'+payHtml+'</div>'+
+    '<button class="btn-main" id="s2-btn" onclick="doSpin2()">CEVIR — $'+fmt(S2.bet)+'</button>';
+  [0,1,2].forEach(function(i){
+    var s=document.getElementById('s2r'+i);
+    if(s)s.style.transform='translateY(-'+(N-1)*S2.SH+'px)';
+  });
+}
+function s2SetBet(v,el){S2.bet=v;document.querySelectorAll('#gs-body .slot-chip').forEach(function(c){c.classList.remove('sel');});el.classList.add('sel');var b=document.getElementById('s2-btn');if(b)b.textContent='CEVIR — $'+fmt(v);}
+function doSpin2(){
+  if(S2.spin)return;if(S2.bet>BAL){toast('Yetersiz','lose');return;}
+  BAL-=S2.bet;JACKPOT+=Math.floor(S2.bet*0.05);upBal();
+  document.getElementById('s2-jp').textContent='$'+fmt(JACKPOT);
+  S2.spin=true;var btn=document.getElementById('s2-btn');if(btn){btn.disabled=true;btn.textContent='DONUYOR...';}
+  var res=document.getElementById('s2-res');if(res){res.textContent='...';res.className='res-txt';}
+  var N=S2.syms.length,targets=[s2wRand(),s2wRand(),s2wRand()],done=0;
+  function go(ri){
+    var strip=document.getElementById('s2r'+ri);if(!strip)return;
+    var steps=0,max=N*3+ri*N+Math.floor(Math.random()*N);
+    var iv=setInterval(function(){
+      steps++;strip.style.transform='translateY(-'+((steps%N+1)*S2.SH)+'px)';
+      if(steps>=max){clearInterval(iv);var fi=targets[ri];
+        strip.style.transition='transform 0.3s ease-out';
+        strip.style.transform='translateY(-'+(N-1+fi)*S2.SH+'px)';
+        setTimeout(function(){strip.style.transition='';done++;if(done===3)finSpin2(targets);},320);}
+    },50);}
+  go(0);setTimeout(function(){go(1);},220);setTimeout(function(){go(2);},440);
+}
+function finSpin2(t){
+  S2.spin=false;var btn=document.getElementById('s2-btn');if(btn){btn.disabled=false;btn.textContent='CEVIR — $'+fmt(S2.bet);}
+  var res=document.getElementById('s2-res');
+  if(t[0]===t[1]&&t[1]===t[2]){
+    var sym=S2.syms[t[0]];
+    if(sym.pay==='JP'){
+      var jp=JACKPOT;BAL+=jp;JACKPOT=500000;upBal();
+      document.getElementById('s2-jp').textContent='$'+fmt(JACKPOT);
+      if(res){res.textContent='JACKPOT! +$'+fmt(jp);res.className='res-txt jp';}toast('+$'+fmt(jp),'win');
+    } else {
+      var netKar=S2.bet*(sym.pay-1);BAL+=S2.bet*sym.pay;kasaOdedi(netKar);
+      if(res){res.textContent=sym.n+' '+sym.pay+'x  +$'+fmt(netKar);res.className='res-txt win';}toast('+$'+fmt(netKar),'win');
+    }
+  } else {
+    kasaKazandi(S2.bet);
+    if(res){res.textContent='ESLESME YOK';res.className='res-txt lose';}toast('-$'+fmt(S2.bet),'lose');
+  }
+}
+
+/* ── SLOT 3: 5-REEL ── */
+var S3={
+  syms:[
+    {id:'gun',    e:'&#128299;',n:'GUN',    w:28,col:'#111'},
+    {id:'money',  e:'&#128176;',n:'MONEY',  w:24,col:'#16a34a'},
+    {id:'whisky', e:'&#129346;',n:'WHISKY', w:20,col:'#B8860B'},
+    {id:'diamond',e:'&#128142;',n:'DIAMOND',w:14,col:'#1d4ed8'},
+    {id:'seven',  e:'7',       n:'SEVEN',  w:7, col:'#dc2626'},
+    {id:'crown',  e:'&#128081;',n:'CROWN',  w:3, col:'#C9A84C'},
+  ],
+  pays:{gun:{3:2,4:5,5:10},money:{3:3,4:8,5:15},whisky:{3:4,4:10,5:20},diamond:{3:6,4:15,5:30},seven:{3:12,4:30,5:60},crown:{3:20,4:50,5:'JP'}},
+  bet:500, spin:false, SH:44, finals:[]
+};
+function s3wRand(){var tot=S3.syms.reduce(function(a,x){return a+x.w;},0),r=Math.random()*tot;for(var i=0;i<S3.syms.length;i++){r-=S3.syms[i].w;if(r<=0)return i;}return 0;}
+
+function renderSlot3(b){
+  JACKPOT+=Math.floor(S3.bet*0.05);
+  var N=S3.syms.length;
+  var stripHtml='';
+  for(var rep=0;rep<4;rep++){S3.syms.forEach(function(s){
+    stripHtml+='<div style="height:'+S3.SH+'px;display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;">'+
+      '<span style="font-size:'+(s.id==='seven'?'18px':'16px')+';line-height:1;'+(s.id==='seven'?'color:#dc2626;font-weight:900;font-family:Oswald,sans-serif;':'')+'">'+(s.id==='seven'?'7':s.e)+'</span>'+
+      '<span style="font-family:Oswald,sans-serif;font-weight:700;font-size:6px;color:'+s.col+';letter-spacing:.3px;">'+s.n+'</span></div>';
+  });}
+  var payHtml=S3.syms.slice(0,4).map(function(s){
+    return '<div style="display:flex;justify-content:space-between;padding:1px 0;border-bottom:1px solid #f0f0f0;">'+
+      '<span style="font-size:10px;letter-spacing:1px;">'+s.e+s.e+s.e+'</span>'+
+      '<span style="font-family:Oswald,sans-serif;font-weight:700;font-size:9px;color:'+s.col+';">'+S3.pays[s.id][3]+'x / '+S3.pays[s.id][4]+'x / '+S3.pays[s.id][5]+'x</span></div>';
+  }).join('');
+  var betHtml=[100,500,1000,5000,10000].map(function(v){
+    var l='$'+(v>=1000?(v/1000)+'K':v);
+    return '<div class="slot-chip'+(v===S3.bet?' sel':'')+'" onclick="s3SetBet('+v+',this)">'+l+'</div>';
+  }).join('');
+  b.innerHTML=
+    '<div style="background:#111;padding:4px 10px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">'+
+      '<span style="font-family:Oswald,sans-serif;font-weight:700;font-size:9px;color:#C9A84C;letter-spacing:3px;">JACKPOT</span>'+
+      '<span style="font-family:Oswald,sans-serif;font-weight:700;font-size:18px;color:#FFD700;" id="s3-jp">$'+fmt(JACKPOT)+'</span></div>'+
+    '<div style="border:2px solid #111;position:relative;flex-shrink:0;overflow:hidden;background:#f8f8f8;">'+
+      '<div style="position:absolute;top:'+(S3.SH-1)+'px;left:0;right:0;height:1px;background:#ddd;z-index:2;pointer-events:none;"></div>'+
+      '<div style="position:absolute;top:'+(S3.SH*2-1)+'px;left:0;right:0;height:1px;background:#ddd;z-index:2;pointer-events:none;"></div>'+
+      '<div style="position:absolute;top:'+(S3.SH-1)+'px;left:0;right:0;height:'+S3.SH+'px;border-top:2px solid #C9A84C;border-bottom:2px solid #C9A84C;background:rgba(201,168,76,.04);z-index:3;pointer-events:none;"></div>'+
+      '<div style="display:flex;height:'+(S3.SH*3)+'px;overflow:hidden;" id="s3-reels">'+
+        [0,1,2,3,4].map(function(i){
+          return '<div style="flex:1;overflow:hidden;border-right:'+(i<4?'1px solid #e0e0e0':'none')+';position:relative;">'+
+            '<div id="s3r'+i+'" style="display:flex;flex-direction:column;will-change:transform;">'+stripHtml+'</div></div>';
+        }).join('')+
+      '</div>'+
+    '</div>'+
+    '<div id="s3-wl" style="display:flex;gap:3px;flex-shrink:0;min-height:18px;"></div>'+
+    '<div class="result-box" style="flex-shrink:0;"><span class="res-txt" id="s3-res">CEVIR BASLAT</span></div>'+
+    '<div class="slot-bets" style="flex-shrink:0;">'+betHtml+'</div>'+
+    '<div style="background:#f8f8f8;border:1px solid #eee;padding:3px 8px;flex-shrink:0;"><div style="font-family:Oswald,sans-serif;font-weight:600;font-size:8px;color:#aaa;margin-bottom:2px;letter-spacing:1px;">3x / 4x / 5x ESLESME</div>'+payHtml+'</div>'+
+    '<button class="btn-main" id="s3-btn" onclick="doSpin3()">CEVIR — $'+fmt(S3.bet)+'</button>';
+  var N2=S3.syms.length;
+  for(var i=0;i<5;i++){var s=document.getElementById('s3r'+i);if(s)s.style.transform='translateY(-'+(N2-1)*S3.SH+'px)';}
+}
+function s3SetBet(v,el){S3.bet=v;document.querySelectorAll('#gs-body .slot-chip').forEach(function(c){c.classList.remove('sel');});el.classList.add('sel');var b=document.getElementById('s3-btn');if(b)b.textContent='CEVIR — $'+fmt(v);}
+function doSpin3(){
+  if(S3.spin)return;if(S3.bet>BAL){toast('Yetersiz','lose');return;}
+  BAL-=S3.bet;JACKPOT+=Math.floor(S3.bet*0.05);upBal();
+  document.getElementById('s3-jp').textContent='$'+fmt(JACKPOT);
+  S3.spin=true;var btn=document.getElementById('s3-btn');if(btn){btn.disabled=true;btn.textContent='DONUYOR...';}
+  var res=document.getElementById('s3-res');if(res){res.textContent='...';res.className='res-txt';}
+  var wl=document.getElementById('s3-wl');if(wl)wl.innerHTML='';
+  var N=S3.syms.length;
+  S3.finals=[];for(var i=0;i<5;i++)S3.finals.push(s3wRand());
+  var done=0;
+  function go(ri){
+    var strip=document.getElementById('s3r'+ri);if(!strip)return;
+    var steps=0,max=N*3+ri*N+Math.floor(Math.random()*N);
+    var iv=setInterval(function(){
+      steps++;strip.style.transform='translateY(-'+((steps%N+1)*S3.SH)+'px)';
+      if(steps>=max){clearInterval(iv);var fi=S3.finals[ri];
+        strip.style.transition='transform 0.3s ease-out';
+        strip.style.transform='translateY(-'+(N-1+fi)*S3.SH+'px)';
+        setTimeout(function(){strip.style.transition='';done++;if(done===5)finSpin3();},320);}
+    },45);}
+  for(var i=0;i<5;i++){(function(r){setTimeout(function(){go(r);},r*150);})(i);}
+}
+function finSpin3(){
+  S3.spin=false;var btn=document.getElementById('s3-btn');if(btn){btn.disabled=false;btn.textContent='CEVIR — $'+fmt(S3.bet);}
+  var res=document.getElementById('s3-res'),wl=document.getElementById('s3-wl');
+  var firstId=S3.syms[S3.finals[0]].id;var anyWin=false;
+  for(var cnt=5;cnt>=3;cnt--){
+    var match=true;for(var i=1;i<cnt;i++){if(S3.syms[S3.finals[i]].id!==firstId){match=false;break;}}
+    if(match){
+      var pay=S3.pays[firstId][cnt];anyWin=true;
+      if(pay==='JP'){
+        var jp=JACKPOT;BAL+=jp;JACKPOT=500000;upBal();
+        document.getElementById('s3-jp').textContent='$'+fmt(JACKPOT);
+        if(res){res.textContent='JACKPOT! +$'+fmt(jp);res.className='res-txt jp';}toast('+$'+fmt(jp),'win');
+      } else {
+        var netKar=S3.bet*(pay-1);BAL+=S3.bet*pay;kasaOdedi(netKar);
+        if(res){res.textContent=cnt+' ESLESME  +$'+fmt(netKar);res.className='res-txt win';}
+        if(wl){var bd=document.createElement('div');bd.style.cssText='padding:2px 7px;font-family:Oswald,sans-serif;font-weight:700;font-size:9px;border:1.5px solid '+S3.syms[S3.finals[0]].col+';color:'+S3.syms[S3.finals[0]].col+';';bd.textContent=cnt+'x '+S3.syms[S3.finals[0]].n+' +$'+fmt(netKar);wl.appendChild(bd);}
+        toast('+$'+fmt(netKar),'win');
+      }
+      break;
+    }
+  }
+  if(!anyWin){kasaKazandi(S3.bet);if(res){res.textContent='ESLESME YOK';res.className='res-txt lose';}toast('-$'+fmt(S3.bet),'lose');}
+}
+
+/* ── BLACKJACK ── */
+var bjBet=1000,bjPhase='idle',bjDeck=[],bjP=[],bjD=[];
+
+function renderBJ(b){
+  b.innerHTML=
+    '<span class="sec-lbl">DEALER</span>'+
+    '<div class="score-row"><span class="score-lbl">EL DEGERI</span><span class="score-val" id="d-sc">-</span></div>'+
+    '<div class="card-area" id="d-cards"></div>'+
+    '<span class="sec-lbl">SEN</span>'+
+    '<div class="score-row"><span class="score-lbl">EL DEGERI</span><span class="score-val" id="p-sc">-</span></div>'+
+    '<div class="card-area" id="p-cards"></div>'+
+    '<div class="result-box"><span class="res-txt" id="bj-res">BAHIS YAP VE DAGIT</span></div>'+
+    '<span class="sec-lbl">BAHIS</span>'+
+    '<div class="chips">'+mkChips([100,500,1000,5000,10000],'bjBet','bj-lbl')+'</div>'+
+    '<div class="bet-row"><div class="bet-box"><span class="bet-lbl">BAHIS</span><span class="bet-val" id="bj-lbl">$'+fmt(bjBet)+'</span></div></div>'+
+    '<div class="btn-row">'+
+    '<button class="btn-sec" id="bj-hit" onclick="bjHit()" disabled>HIT</button>'+
+    '<button class="btn-sec" id="bj-stand" onclick="bjStand()" disabled>STAND</button>'+
+    '<button class="btn-sec" id="bj-dbl" onclick="bjDouble()" disabled>DOUBLE</button>'+
+    '</div>'+
+    '<button class="btn-main" id="bj-deal" onclick="bjDeal()">DAGIT  $'+fmt(bjBet)+'</button>';
+}
+
+function mkChips(amts,vn,lid){
+  var chipFiles=['casino_chip_red','casino_chip_green','casino_chip_blue','casino_chip_purple','casino_chip_gold'];
+  var cls=['r','g','b','p','k'];
+  return amts.map(function(v,i){
+    var l=v>=1000000?'$'+(v/1000000)+'M':v>=1000?'$'+(v/1000)+'K':'$'+v;
+    var img='<img src="'+BASE+chipFiles[i%5]+'.png" style="width:28px;height:28px;object-fit:contain;" onerror="imgErr(this)">';
+    return '<div class="chip '+cls[i%5]+(v===window[vn]?' sel':'')+'" onclick="setCBet(\''+vn+'\','+v+',\''+lid+'\',this)" style="flex-direction:column;gap:1px;width:42px;height:42px;">'+img+'<span style="font-size:7px;">'+l+'</span></div>';
+  }).join('');
+}
+
+function setCBet(vn,v,lid,el){
+  window[vn]=v;
+  el.closest('.chips').querySelectorAll('.chip').forEach(function(c){c.classList.remove('sel');});
+  el.classList.add('sel');
+  var l=document.getElementById(lid);if(l)l.textContent='$'+fmt(v);
+  var deal=document.getElementById('bj-deal');if(deal)deal.textContent='DAGIT  $'+fmt(v);
+}
+
+function mkD(){bjDeck=[];
+  var suInfo=[
+    {s:'&#9824;',red:false,file:'card_spade'},
+    {s:'&#9829;',red:true, file:'card_heart'},
+    {s:'&#9830;',red:true, file:'card_diamond'},
+    {s:'&#9827;',red:false,file:'card_club'},
+  ];
+  VALS.forEach(function(v){suInfo.forEach(function(si){bjDeck.push({v:v,s:si.s,red:si.red,sfile:si.file});});});
+}
+function shuf(d){for(var i=d.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=d[i];d[i]=d[j];d[j]=t;}}
+function dlC(){return bjDeck.pop();}
+function hv(h){var v=0,a=0;h.forEach(function(c){if(c.v==='A'){v+=11;a++;}else if(['K','Q','J'].indexOf(c.v)!==-1)v+=10;else v+=parseInt(c.v);});while(v>21&&a>0){v-=10;a--;}return v;}
+function rcBJ(hand,id,hide){
+  var el=document.getElementById(id);if(!el)return;el.innerHTML='';
+  hand.forEach(function(c,i){
+    var d=document.createElement('div');
+    if(hide&&i===0){
+      d.className='card back';
+      var bImg=document.createElement('img');
+      bImg.src=BASE+'card_back.png';
+      bImg.style.cssText='width:100%;height:100%;object-fit:cover;border-radius:1px;';
+      bImg.onerror=function(){this.style.display='none';};
+      d.appendChild(bImg);
+    }
+    else{
+      d.className='card '+(c.red?'red':'black');
+      var sImg=document.createElement('img');
+      sImg.src=BASE+(c.sfile||'card_spade')+'.png';
+      sImg.style.cssText='width:10px;height:10px;object-fit:contain;';
+      (function(cs){sImg.onerror=function(){this.outerHTML=cs;};})(c.s);
+      var cv=document.createElement('div');cv.className='cv';cv.textContent=c.v;
+      var cs2=document.createElement('div');cs2.className='cs';cs2.appendChild(sImg);
+      d.appendChild(cv);d.appendChild(cs2);
+    }
+    el.appendChild(d);
+  });
+}
+
+function bjDeal(){
+  if(bjPhase!=='idle')return;
+  if(bjBet>BAL){toast('Yetersiz','lose');return;}
+  if(!kasaYeterli(bjBet*4)){toast('CASINO CLOSED — Owner needs to fund','lose');return;}
+  BAL-=bjBet;upBal();mkD();shuf(bjDeck);bjP=[dlC(),dlC()];bjD=[dlC(),dlC()];bjPhase='play';
+  var res=document.getElementById('bj-res');if(res){res.textContent='';res.className='res-txt';}
+  rcBJ(bjP,'p-cards',false);rcBJ(bjD,'d-cards',true);
+  var ps=document.getElementById('p-sc');if(ps)ps.textContent=hv(bjP);
+  var ds=document.getElementById('d-sc');if(ds)ds.textContent='?';
+  setBJ(true,false,false,false);
+  if(hv(bjP)===21)bjStand();
+}
+function bjHit(){if(bjPhase!=='play')return;bjP.push(dlC());rcBJ(bjP,'p-cards',false);var pv=hv(bjP);var ps=document.getElementById('p-sc');if(ps)ps.textContent=pv;if(pv>21)bjEnd();else if(pv===21)bjStand();}
+function bjStand(){if(bjPhase!=='play')return;bjPhase='deal';setBJ(true,true,true,true);rcBJ(bjD,'d-cards',false);var iv=setInterval(function(){var dv=hv(bjD);var ds=document.getElementById('d-sc');if(ds)ds.textContent=dv;if(dv<17){bjD.push(dlC());rcBJ(bjD,'d-cards',false);}else{clearInterval(iv);bjEnd();}},500);}
+function bjDouble(){if(bjPhase!=='play'||bjP.length>2)return;if(bjBet>BAL){toast('Yetersiz','lose');return;}BAL-=bjBet;upBal();bjBet*=2;bjP.push(dlC());rcBJ(bjP,'p-cards',false);var pv=hv(bjP);var ps=document.getElementById('p-sc');if(ps)ps.textContent=pv;if(pv>21)bjEnd();else bjStand();}
+function bjEnd(){
+  bjPhase='idle';var pv=hv(bjP),dv=hv(bjD);
+  var ds=document.getElementById('d-sc');if(ds)ds.textContent=dv;
+  rcBJ(bjD,'d-cards',false);
+  var res=document.getElementById('bj-res');if(!res)return;
+  if(pv>21){
+    kasaKazandi(bjBet);
+    res.textContent='BUST!';res.className='res-txt lose';
+  } else if(dv>21){
+    BAL+=bjBet*2;kasaOdedi(bjBet);
+    res.textContent='DEALER BUST! +$'+fmt(bjBet);res.className='res-txt win';toast('+$'+fmt(bjBet),'win');
+  } else if(pv>dv){
+    BAL+=bjBet*2;kasaOdedi(bjBet);
+    res.textContent='KAZANDIN! +$'+fmt(bjBet);res.className='res-txt win';toast('+$'+fmt(bjBet),'win');
+  } else if(pv===dv){
+    BAL+=bjBet;upBal();
+    res.textContent='BERABERE';res.className='res-txt push';
+  } else {
+    kasaKazandi(bjBet);
+    res.textContent='KAYBETTIN';res.className='res-txt lose';toast('-$'+fmt(bjBet),'lose');
+  }
+  setBJ(false,true,true,true);
+  var deal=document.getElementById('bj-deal');if(deal){deal.disabled=false;deal.textContent='DAGIT  $'+fmt(bjBet);}
+}
+function setBJ(dealDis,hitDis,standDis,dblDis){
+  var d=document.getElementById('bj-deal');if(d)d.disabled=dealDis;
+  var h=document.getElementById('bj-hit');if(h)h.disabled=hitDis;
+  var s=document.getElementById('bj-stand');if(s)s.disabled=standDis;
+  var db=document.getElementById('bj-dbl');if(db)db.disabled=dblDis;
+}
+
+/* ── RULET — ÇARK ── */
+var WHEEL_ORDER=[0,32,15,19,4,21,2,25,17,34,6,27,13,36,11,30,8,23,10,5,24,16,33,1,20,14,31,9,22,18,29,7,28,12,35,3,26];
+var REDS=[1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36];
+var rouBets={};
+var rouSelChip=500;
+var rouSpinning=false;
+var rouWheelAngle=0;
+var rouAnimId=null;
+var rouCanvas=null;
+var rouCtx=null;
+var OUT_DEFS=[
+  {id:'red',  lbl:'KIRMIZI',odd:'2x',cls:'rbg',mult:2,check:function(n){return n!==0&&REDS.indexOf(n)!==-1;}},
+  {id:'black',lbl:'SIYAH',  odd:'2x',cls:'bbg',mult:2,check:function(n){return n!==0&&REDS.indexOf(n)===-1;}},
+  {id:'even', lbl:'CIFT',   odd:'2x',cls:'',   mult:2,check:function(n){return n!==0&&n%2===0;}},
+  {id:'odd',  lbl:'TEK',    odd:'2x',cls:'',   mult:2,check:function(n){return n%2!==0;}},
+  {id:'low',  lbl:'1–18',   odd:'2x',cls:'',   mult:2,check:function(n){return n>=1&&n<=18;}},
+  {id:'high', lbl:'19–36',  odd:'2x',cls:'',   mult:2,check:function(n){return n>=19&&n<=36;}},
+];
+
+function rouNumCol(n){return n===0?'green':REDS.indexOf(n)!==-1?'red':'black';}
+
+function rouDrawWheel(angle){
+  if(!rouCtx)return;
+  var CX=90,CY=90,R=84,RI=22,N=WHEEL_ORDER.length,segA=(2*Math.PI)/N;
+  rouCtx.clearRect(0,0,180,180);
+  for(var i=0;i<N;i++){
+    var num=WHEEL_ORDER[i];
+    var sa=angle+i*segA-Math.PI/2,ea=sa+segA;
+    var col=num===0?'#16a34a':REDS.indexOf(num)!==-1?'#dc2626':'#111';
+    rouCtx.beginPath();rouCtx.moveTo(CX,CY);rouCtx.arc(CX,CY,R,sa,ea);rouCtx.closePath();
+    rouCtx.fillStyle=col;rouCtx.fill();
+    rouCtx.strokeStyle='#fff';rouCtx.lineWidth=0.4;rouCtx.stroke();
+    rouCtx.save();rouCtx.translate(CX,CY);rouCtx.rotate(sa+segA/2);rouCtx.translate(R*0.72,0);rouCtx.rotate(Math.PI/2);
+    rouCtx.fillStyle='#fff';rouCtx.font='bold 6px Oswald,sans-serif';rouCtx.textAlign='center';rouCtx.textBaseline='middle';
+    rouCtx.fillText(num,0,0);rouCtx.restore();
+  }
+  rouCtx.beginPath();rouCtx.arc(CX,CY,RI,0,2*Math.PI);rouCtx.fillStyle='#fff';rouCtx.fill();
+  rouCtx.strokeStyle='#ddd';rouCtx.lineWidth=1.5;rouCtx.stroke();
+  rouCtx.beginPath();rouCtx.arc(CX,CY,5,0,2*Math.PI);rouCtx.fillStyle='#111';rouCtx.fill();
+  // pointer down
+  rouCtx.beginPath();rouCtx.moveTo(CX,14);rouCtx.lineTo(CX-5,4);rouCtx.lineTo(CX+5,4);
+  rouCtx.closePath();rouCtx.fillStyle='#C9A84C';rouCtx.fill();
+}
+
+function rouUpTotal(){
+  var tot=Object.values(rouBets).reduce(function(s,b){return s+b.amount;},0);
+  var el=document.getElementById('rou-total-v');if(el)el.textContent='$'+fmt(tot);
+}
+
+function rouAddBet(id,label,mult,check){
+  if(rouSpinning)return;
+  if(rouSelChip>BAL){toast('Yetersiz','lose');return;}
+  if(rouBets[id])rouBets[id].amount+=rouSelChip;
+  else rouBets[id]={id:id,label:label,amount:rouSelChip,mult:mult,check:check};
+  rouRenderBets();rouUpdateHL();rouUpTotal();
+}
+function rouRemoveBet(id){delete rouBets[id];rouRenderBets();rouUpdateHL();rouUpTotal();}
+function rouClearBets(){rouBets={};rouRenderBets();rouUpdateHL();rouUpTotal();}
+
+function rouRenderBets(){
+  var el=document.getElementById('rou-ab');if(!el)return;
+  var keys=Object.keys(rouBets);
+  if(!keys.length){el.innerHTML='<div style="font-family:Oswald,sans-serif;font-size:9px;color:#ccc;padding:3px 0;">Bahis yok</div>';return;}
+  el.innerHTML=keys.map(function(k){
+    var b=rouBets[k];
+    return '<div class="rou-ab-row">'+
+      '<span class="rou-ab-lbl">'+b.label+' ('+b.mult+'x)</span>'+
+      '<div style="display:flex;align-items:center;gap:3px;">'+
+        '<span class="rou-ab-val">$'+fmt(b.amount)+'</span>'+
+        '<button class="rou-ab-del" onclick="rouRemoveBet(\''+k+'\')">✕</button>'+
+      '</div></div>';
+  }).join('');
+}
+
+function rouUpdateHL(){
+  OUT_DEFS.forEach(function(ob){
+    var el=document.getElementById('rob-'+ob.id),badge=document.getElementById('rob-badge-'+ob.id),b=rouBets['out-'+ob.id];
+    if(el)el.classList.toggle('has-bet',!!b);
+    if(badge)badge.textContent='$'+fmt(b?b.amount:0);
+  });
+  for(var n=0;n<=36;n++){
+    var el=document.getElementById('rn-'+n),badge=document.getElementById('rn-badge-'+n),b=rouBets['num-'+n];
+    if(el)el.classList.toggle('has-bet',!!b);
+    if(badge)badge.textContent='$'+fmt(b?b.amount:0);
+  }
+}
+
+function renderRoulet(b){
+  rouBets={};rouSpinning=false;
+  var chipHtml=['$100','$500','$1K','$5K','$10K'].map(function(l,i){
+    var v=[100,500,1000,5000,10000][i];
+    var cls=['ch-r','ch-g','ch-b','ch-p','ch-k'][i];
+    return '<div class="rou-chip '+cls+(v===rouSelChip?' on':'')+'" onclick="rouChipSel('+v+',this)">'+l+'</div>';
+  }).join('');
+  var outHtml=OUT_DEFS.map(function(ob){
+    return '<div class="rou-out '+(ob.cls||'')+'" id="rob-'+ob.id+'" onclick="rouAddBet(\'out-'+ob.id+'\',\''+ob.lbl+'\','+ob.mult+',OUT_DEFS.find(function(x){return x.id===\''+ob.id+'\'}).check)">'+
+      '<span class="rou-badge" id="rob-badge-'+ob.id+'">$0</span>'+
+      '<span class="rou-out-l">'+ob.lbl+'</span>'+
+      '<span class="rou-out-o">'+ob.odd+'</span></div>';
+  }).join('');
+  var numHtml='';
+  for(var n=0;n<=36;n++){
+    var col=n===0?'ng':REDS.indexOf(n)!==-1?'nr':'nb';
+    numHtml+='<div class="rou-num '+col+'" id="rn-'+n+'" onclick="rouAddBet(\'num-'+n+'\',\''+n+'\',36,function(r){return r==='+n+';})">'
+      +n+'<span class="rou-nbadge" id="rn-badge-'+n+'"></span></div>';
+  }
+  b.innerHTML=
+    '<div class="rou-wrap">'+
+    '<div style="background:#111;padding:4px 10px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">'+
+      '<span style="font-family:Oswald,sans-serif;font-weight:700;font-size:9px;color:#C9A84C;letter-spacing:3px;">JACKPOT</span>'+
+      '<span style="font-family:Oswald,sans-serif;font-weight:700;font-size:16px;color:#FFD700;" id="rou-jackpot-val">$'+fmt(JACKPOT)+'</span>'+
+    '</div>'+
+    '<div class="rou-canvas-wrap">'+
+      '<canvas id="rou-canvas" width="180" height="180"></canvas>'+
+      '<div class="rou-result-txt" id="rou-rtxt">BAHİS KOY VE ÇEVİR</div>'+
+    '</div>'+
+    '<div style="padding:5px 8px;overflow-y:auto;flex:1;">'+
+      '<div style="font-family:Oswald,sans-serif;font-weight:700;font-size:9px;color:#B8860B;letter-spacing:1.5px;margin-bottom:4px;">CHİP SEÇ</div>'+
+      '<div class="rou-chip-row">'+chipHtml+'</div>'+
+      '<div style="font-family:Oswald,sans-serif;font-weight:700;font-size:9px;color:#B8860B;letter-spacing:1.5px;margin-bottom:4px;">DIŞARI — 2x</div>'+
+      '<div class="rou-out-grid">'+outHtml+'</div>'+
+      '<div style="font-family:Oswald,sans-serif;font-weight:700;font-size:9px;color:#B8860B;letter-spacing:1.5px;margin-bottom:4px;">NUMARA — 36x</div>'+
+      '<div class="rou-num-grid">'+numHtml+'</div>'+
+      '<div style="font-family:Oswald,sans-serif;font-weight:700;font-size:9px;color:#B8860B;letter-spacing:1.5px;margin-bottom:4px;">AKTİF BAHİSLER</div>'+
+      '<div id="rou-ab"></div>'+
+      '<div class="rou-total"><span class="rou-total-l">TOPLAM BAHİS</span><span class="rou-total-v" id="rou-total-v">$0</span></div>'+
+      '<div class="rou-act">'+
+        '<button class="rou-clear" onclick="rouClearBets()">TEMİZLE</button>'+
+        '<button class="rou-spin" id="rou-spin-btn" onclick="rouSpin()">ÇEVİR</button>'+
+      '</div>'+
+    '</div></div>';
+
+  rouCanvas=document.getElementById('rou-canvas');
+  rouCtx=rouCanvas?rouCanvas.getContext('2d'):null;
+  rouDrawWheel(rouWheelAngle);
+  rouRenderBets();rouUpTotal();
+}
+
+function rouChipSel(v,el){
+  rouSelChip=v;
+  document.querySelectorAll('.rou-chip').forEach(function(c){c.classList.remove('on');});
+  el.classList.add('on');
+}
+
+function rouSpin(){
+  var keys=Object.keys(rouBets);
+  if(!keys.length){toast('Önce bahis koy','info');return;}
+  var tot=keys.reduce(function(s,k){return s+rouBets[k].amount;},0);
+  if(tot>BAL){toast('Yetersiz','lose');return;}
+  BAL-=tot;
+  JACKPOT+=Math.floor(tot*0.05);
+  var rjv=document.getElementById('rou-jackpot-val');if(rjv)rjv.textContent='$'+fmt(JACKPOT);
+  upBal();rouSpinning=true;
+  var btn=document.getElementById('rou-spin-btn');if(btn)btn.disabled=true;
+  var rtxt=document.getElementById('rou-rtxt');if(rtxt){rtxt.textContent='...';rtxt.className='rou-result-txt';}
+
+  var result=Math.floor(Math.random()*37);
+  var resultIdx=WHEEL_ORDER.indexOf(result);
+  var N=WHEEL_ORDER.length,segA=2*Math.PI/N;
+  var minTurns=5+Math.floor(Math.random()*4);
+  var targetAngle=(-resultIdx*segA-segA/2)+(Math.PI*2*minTurns);
+  var startAngle=rouWheelAngle;
+  var total=startAngle+targetAngle;
+  var startTime=Date.now();
+  var duration=5000+Math.random()*2000;
+
+  function easeOut(t){return 1-Math.pow(1-t,4);}
+  function anim(){
+    var elapsed=Date.now()-startTime,t=Math.min(1,elapsed/duration);
+    rouWheelAngle=startAngle+(total-startAngle)*easeOut(t);
+    rouDrawWheel(rouWheelAngle);
+    if(t<1){rouAnimId=requestAnimationFrame(anim);}
+    else{rouDrawWheel(rouWheelAngle);rouOnEnd(result);}
+  }
+  rouAnimId=requestAnimationFrame(anim);
+}
+
+function rouOnEnd(result){
+  rouSpinning=false;
+  var btn=document.getElementById('rou-spin-btn');if(btn)btn.disabled=false;
+  var col=rouNumCol(result);
+  var colName=col==='red'?'KIRMIZI':col==='black'?'SİYAH':'YEŞİL';
+  var rtxt=document.getElementById('rou-rtxt');
+  if(rtxt){rtxt.textContent=result+' — '+colName;rtxt.className='rou-result-txt '+col;}
+  var totalBet=Object.values(rouBets).reduce(function(s,b){return s+b.amount;},0);
+  var totalWin=0;
+  Object.values(rouBets).forEach(function(b){if(b.check(result))totalWin+=b.amount*b.mult;});
+  if(totalWin>0){
+    var netKar=totalWin-totalBet;
+    BAL+=totalWin;
+    if(netKar>0)kasaOdedi(netKar);else if(netKar<0)kasaKazandi(-netKar);
+    toast(result+' — +$'+fmt(netKar),'win');
+  } else {
+    kasaKazandi(totalBet);
+    toast(result+' — KAYBETTİN','lose');
+  }
+  rouBets={};rouRenderBets();rouUpdateHL();rouUpTotal();
+}
+
+/* ── POKER ── */
+var pkBet=1000,pkPhase='idle',pkH=[],pkHeld=[false,false,false,false,false],pkDeck=[];
+var PKPAY=[{n:'ROYAL FLUSH',m:250},{n:'STRAIGHT FLUSH',m:50},{n:'DORTLU',m:25},{n:'FULL HOUSE',m:9},{n:'FLUSH',m:6},{n:'SIRALAMA',m:4},{n:'UCLU',m:3},{n:'IKI CIFT',m:2},{n:'CIFT J+',m:1}];
+
+function renderPoker(b){
+  var payH=PKPAY.map(function(p){return '<span class="pk-pay-lbl">'+p.n+'</span><span class="pk-pay-val">'+p.m+'x</span>';}).join('');
+  b.innerHTML=
+    '<span class="sec-lbl">KAZANC TABLOSU</span>'+
+    '<div class="pk-pay">'+payH+'</div>'+
+    '<span class="sec-lbl">EL</span>'+
+    '<div class="pk-cards" id="pk-cards"><div style="font-family:Oswald,sans-serif;font-weight:600;font-size:11px;color:#aaa;text-align:center;width:100%;padding:20px;">DAGIT BUTONUNA BAS</div></div>'+
+    '<div class="result-box"><span class="res-txt" id="pk-res">BAHIS YAP</span></div>'+
+    '<span class="sec-lbl">BAHIS</span>'+
+    '<div class="chips">'+mkChips([100,500,1000,5000,10000],'pkBet','pk-lbl')+'</div>'+
+    '<div class="bet-row"><div class="bet-box"><span class="bet-lbl">BAHIS</span><span class="bet-val" id="pk-lbl">$'+fmt(pkBet)+'</span></div></div>'+
+    '<button class="btn-main" id="pk-deal" onclick="pkDeal()">DAGIT  $'+fmt(pkBet)+'</button>'+
+    '<button class="btn-main" id="pk-draw" onclick="pkDraw()" style="display:none;background:#16a34a;">DEGISTIR</button>';
+}
+function mkPD(){pkDeck=[];
+  var suInfo=[
+    {s:'&#9824;',red:false,file:'card_spade'},
+    {s:'&#9829;',red:true, file:'card_heart'},
+    {s:'&#9830;',red:true, file:'card_diamond'},
+    {s:'&#9827;',red:false,file:'card_club'},
+  ];
+  VALS.forEach(function(v){suInfo.forEach(function(si){pkDeck.push({v:v,s:si.s,red:si.red,sfile:si.file});});});
+}
+function shufPk(){for(var i=pkDeck.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=pkDeck[i];pkDeck[i]=pkDeck[j];pkDeck[j]=t;}}
+function rPK(){var c=document.getElementById('pk-cards');if(!c)return;c.innerHTML='';pkH.forEach(function(card,i){var d=document.createElement('div');d.className='cpk '+(card.red?'red':'black')+(pkHeld[i]?' held':'');var sImg=document.createElement('img');sImg.src=BASE+(card.sfile||'card_spade')+'.png';sImg.style.cssText='width:10px;height:10px;object-fit:contain;';sImg.onerror=function(){this.outerHTML=card.s;};var cv=document.createElement('div');cv.className='cv';cv.textContent=card.v;var cs=document.createElement('div');cs.className='cs';cs.appendChild(sImg);d.appendChild(cv);d.appendChild(cs);(function(idx,el){el.onclick=function(){if(pkPhase!=='draw')return;pkHeld[idx]=!pkHeld[idx];rPK();};})(i,d);c.appendChild(d);});}
+function pkDeal(){if(pkBet>BAL){toast('Yetersiz','lose');return;}if(!kasaYeterli(pkBet*250)){toast('CASINO CLOSED — Owner needs to fund','lose');return;}BAL-=pkBet;upBal();mkPD();shufPk();pkH=[];for(var i=0;i<5;i++)pkH.push(pkDeck.pop());pkHeld=[false,false,false,false,false];pkPhase='draw';rPK();var res=document.getElementById('pk-res');if(res){res.textContent='TUTMAK ISTEDIKLERINI SEC';res.className='res-txt';}var deal=document.getElementById('pk-deal');if(deal)deal.style.display='none';var draw=document.getElementById('pk-draw');if(draw)draw.style.display='';}
+function pkDraw(){for(var i=0;i<5;i++){if(!pkHeld[i])pkH[i]=pkDeck.pop();}pkHeld=[false,false,false,false,false];pkPhase='result';rPK();var r=evalPk(pkH);var res=document.getElementById('pk-res');if(!res)return;if(r.m>0){var netKar=pkBet*(r.m-1);BAL+=pkBet*r.m;kasaOdedi(netKar);res.textContent=r.n+' +$'+fmt(netKar);res.className='res-txt win';toast('+$'+fmt(netKar),'win');}else{kasaKazandi(pkBet);res.textContent='KAZANSIZ -$'+fmt(pkBet);res.className='res-txt lose';toast('-$'+fmt(pkBet),'lose');}var deal=document.getElementById('pk-deal');if(deal){deal.style.display='';deal.textContent='DAGIT  $'+fmt(pkBet);}var draw=document.getElementById('pk-draw');if(draw)draw.style.display='none';pkPhase='idle';}
+function evalPk(hand){var vi=hand.map(function(c){return VALS.indexOf(c.v);});var ss=hand.map(function(c){return c.s;});vi.sort(function(a,b){return a-b;});var cnt={};vi.forEach(function(v){cnt[v]=(cnt[v]||0)+1;});var cnts=Object.values(cnt).sort(function(a,b){return b-a;});var isF=ss.every(function(s){return s===ss[0];});var isS=(vi[4]-vi[0]===4&&cnts[0]===1)||(vi[4]===12&&vi[3]===3&&vi[2]===2&&vi[1]===1&&vi[0]===0);if(isF&&isS&&vi[4]===12)return{n:'ROYAL FLUSH',m:250};if(isF&&isS)return{n:'STRAIGHT FLUSH',m:50};if(cnts[0]===4)return{n:'DORTLU',m:25};if(cnts[0]===3&&cnts[1]===2)return{n:'FULL HOUSE',m:9};if(isF)return{n:'FLUSH',m:6};if(isS)return{n:'SIRALAMA',m:4};if(cnts[0]===3)return{n:'UCLU',m:3};if(cnts[0]===2&&cnts[1]===2)return{n:'IKI CIFT',m:2};if(cnts[0]===2){var pk=parseInt(Object.keys(cnt).find(function(k){return cnt[k]===2;}));if(pk>=10||pk===0)return{n:'CIFT J+',m:1};}return{n:'',m:0};}
+
+/* ── AT YARISI ── */
+var HORSES=[
+  {n:'DARK THUNDER', color:'#dc2626'},
+  {n:'GOLDEN WIND',  color:'#B8860B'},
+  {n:'IRON SHADOW',  color:'#1d4ed8'},
+  {n:'CRIMSON BLADE',color:'#7e22ce'},
+  {n:'SILENT STORM', color:'#16a34a'},
+  {n:'LAST HOPE',    color:'#555'   },
+];
+var raceBet=1000,raceSel=-1,raceRunning=false,racePos=[0,0,0,0,0,0];
+var FINISH=170;
+
+function randomRaceOdds(){
+  var w=HORSES.map(function(){return 0.5+Math.random()*3;});
+  var tot=w.reduce(function(a,b){return a+b;},0);
+  HORSES.forEach(function(h,i){h.odds=Math.max(1.5,Math.min(14,+(1/(w[i]/tot)).toFixed(1)));});
+}
+
+function renderRace(b){
+  randomRaceOdds();raceSel=-1;racePos=[0,0,0,0,0,0];
+  var track=HORSES.map(function(h,i){
+    var horseImg='<img src="'+BASE+'horse_'+(i+1)+'.png" style="width:24px;height:24px;object-fit:contain;" onerror="imgErr(this)">';
+    return '<div class="race-lane">'+
+      '<div class="lane-num" style="background:'+h.color+'">'+(i+1)+'</div>'+
+      '<div class="lane-name">'+h.n.split(" ")[0]+'</div>'+
+      '<div class="racer" id="racer-'+i+'">'+horseImg+'</div>'+
+      '<div class="lane-odds" id="odds-'+i+'">'+h.odds+'x</div>'+
+    '</div>';
+  }).join('');
+  var opts=HORSES.map(function(h,i){
+    return '<div class="race-opt" onclick="racePick('+i+',this)" id="ropt-'+i+'">'+
+      '<span class="ro-name">'+h.n.split(" ")[0]+'</span>'+
+      '<span class="ro-odds" id="roptodds-'+i+'">'+h.odds+'x</span>'+
+    '</div>';
+  }).join('');
+  b.innerHTML=
+    '<span class="sec-lbl">PIST — ODDS HER YARISTA DEGISIR</span>'+
+    '<div class="race-track">'+track+'</div>'+
+    '<div class="result-box"><span class="res-txt" id="race-res">AT SEC VE BAHIS YAP</span></div>'+
+    '<span class="sec-lbl">AT SEC</span>'+
+    '<div class="race-opts">'+opts+'</div>'+
+    '<div class="chips">'+mkChips([100,500,1000,5000,10000],"raceBet","race-lbl")+'</div>'+
+    '<div class="bet-wrap"><span class="bet-lbl">BAHIS</span><span class="bet-val" id="race-lbl">$'+fmt(raceBet)+'</span></div>'+
+    '<button class="btn-main" id="race-btn" onclick="startRace()">YARIS BASLAT</button>';
+}
+
+function racePick(i,el){raceSel=i;document.querySelectorAll(".race-opt").forEach(function(e){e.classList.remove("sel");});el.classList.add("sel");}
+
+function pickWinnerByOdds(){
+  var w=HORSES.map(function(h){return 1/h.odds;});
+  var tot=w.reduce(function(a,b){return a+b;},0);
+  var r=Math.random()*tot,cum=0;
+  for(var i=0;i<HORSES.length;i++){cum+=w[i];if(r<=cum)return i;}
+  return HORSES.length-1;
+}
+
+function startRace(){
+  if(raceSel<0){toast("At sec","lose");return;}
+  if(raceBet>BAL){toast("Yetersiz","lose");return;}
+  if(raceRunning)return;
+  BAL-=raceBet;upBal();raceRunning=true;
+  var btn=document.getElementById("race-btn");if(btn)btn.disabled=true;
+  var res=document.getElementById("race-res");if(res){res.textContent="YARIS DEVAM EDIYOR...";res.className="res-txt";}
+  racePos=[0,0,0,0,0,0];
+  for(var i=0;i<6;i++){var r=document.getElementById("racer-"+i);if(r)r.style.left="86px";}
+  var winner=pickWinnerByOdds();
+  raceTimer=setInterval(function(){
+    var finished=-1;
+    for(var i=0;i<6;i++){
+      var luck=(i===winner)?0.5+Math.random()*0.8:0.2+Math.random()*0.85;
+      racePos[i]+=2.2*luck;
+      var r=document.getElementById("racer-"+i);
+      if(r)r.style.left=Math.min(90+racePos[i],90+FINISH)+"px";
+      if(racePos[i]>=FINISH&&finished<0)finished=i;
+    }
+    if(finished>=0){
+      clearInterval(raceTimer);raceRunning=false;
+      var btn2=document.getElementById("race-btn");if(btn2)btn2.disabled=false;
+      var res2=document.getElementById("race-res");
+      if(finished===raceSel){
+        var g=Math.floor(raceBet*HORSES[raceSel].odds);
+        var netKar=g-raceBet;BAL+=g;kasaOdedi(netKar);
+        if(res2){res2.textContent=HORSES[finished].n+" BIRINCI! +$"+fmt(netKar);res2.className="res-txt win";}
+        toast("+$"+fmt(netKar),"win");
+      } else {
+        kasaKazandi(raceBet);
+        if(res2){res2.textContent=HORSES[finished].n+" BIRINCI! KAYBETTIN.";res2.className="res-txt lose";}
+        toast("-$"+fmt(raceBet),"lose");
+      }
+      setTimeout(function(){
+        randomRaceOdds();
+        HORSES.forEach(function(h,i){
+          var e=document.getElementById("odds-"+i);if(e)e.textContent=h.odds+"x";
+          var f=document.getElementById("roptodds-"+i);if(f)f.textContent=h.odds+"x";
+        });
+      },1500);
+    }
+  },60);
+}
+
+/* ── BOKS ── */
+var BOKSORLER=[
+  {n:"IRON MIKE",  color:"#dc2626", record:"28-2"},
+  {n:"THE SHADOW", color:"#111",    record:"22-5"},
+];
+var boksBet=1000,boksSel=-1,boksOdds=[1.8,2.1],boksRunning=false;
+
+function randomBoksOdds(){
+  var p=0.35+Math.random()*0.3;
+  boksOdds[0]=+(1/p*0.95).toFixed(2);
+  boksOdds[1]=+(1/(1-p)*0.95).toFixed(2);
+}
+
+function renderBoks(b){
+  randomBoksOdds();boksSel=-1;
+  b.innerHTML=
+    '<span class="sec-lbl">DOVUSCU SEC — ODDS HER DOVUSTE DEGISIR</span>'+
+    '<div style="display:flex;gap:6px;margin-bottom:6px;">'+
+    BOKSORLER.map(function(bk,i){
+      return '<div style="flex:1;border:1.5px solid #ddd;padding:10px 6px;text-align:center;cursor:pointer;" id="bopt-'+i+'" onclick="boksPick('+i+',this)">'+
+        '<div style="width:40px;height:40px;border-radius:50%;background:'+bk.color+';margin:0 auto 5px;display:flex;align-items:center;justify-content:center;font-size:20px;">&#129354;</div>'+
+        '<span style="font-family:Oswald,sans-serif;font-weight:700;font-size:13px;color:#111;display:block;">'+bk.n+'</span>'+
+        '<span style="font-family:Oswald,sans-serif;font-weight:600;font-size:9px;color:#888;display:block;margin-top:1px;">'+bk.record+'</span>'+
+        '<span style="font-family:Oswald,sans-serif;font-weight:700;font-size:18px;color:#C9A84C;display:block;margin-top:4px;" id="bods-'+i+'">'+boksOdds[i]+'x</span>'+
+      '</div>';
+    }).join('')+
+    '</div>'+
+    '<div id="boks-progress" style="display:flex;gap:3px;margin-bottom:6px;">'+
+    [1,2,3,4,5,6].map(function(r){
+      return '<div style="flex:1;height:24px;background:#eee;border-radius:2px;display:flex;align-items:center;justify-content:center;font-family:Oswald,sans-serif;font-weight:700;font-size:8px;color:#aaa;" id="bround-'+r+'">R'+r+'</div>';
+    }).join('')+
+    '</div>'+
+    '<div class="result-box"><span class="res-txt" id="boks-res">DOVUSCU SEC</span></div>'+
+    '<div class="chips">'+mkChips([100,500,1000,5000,10000],"boksBet","boks-lbl")+'</div>'+
+    '<div class="bet-wrap"><span class="bet-lbl">BAHIS</span><span class="bet-val" id="boks-lbl">$'+fmt(boksBet)+'</span></div>'+
+    '<button class="btn-main" id="boks-btn" onclick="startBoks()">DOVUSU BASLAT</button>';
+}
+
+function boksPick(i,el){
+  boksSel=i;
+  document.querySelectorAll("[id^=bopt-]").forEach(function(e){e.style.borderColor="#ddd";});
+  el.style.borderColor="#111";
+}
+
+function startBoks(){
+  if(boksSel<0){toast("Dovuscu sec","lose");return;}
+  if(boksBet>BAL){toast("Yetersiz","lose");return;}
+  if(boksRunning)return;
+  BAL-=boksBet;upBal();boksRunning=true;
+  var btn=document.getElementById("boks-btn");if(btn)btn.disabled=true;
+  var res=document.getElementById("boks-res");if(res){res.textContent="DOVUS DEVAM EDIYOR...";res.className="res-txt";}
+  for(var r=1;r<=6;r++){var el=document.getElementById("bround-"+r);if(el){el.style.background="#eee";el.style.color="#aaa";}}
+  var p0=1/boksOdds[0]/(1/boksOdds[0]+1/boksOdds[1]);
+  var winner=Math.random()<p0?0:1;
+  var finishRound=2+Math.floor(Math.random()*5);
+  var ri=1;
+  var iv=setInterval(function(){
+    var el=document.getElementById("bround-"+ri);
+    if(el){el.style.background=BOKSORLER[winner].color;el.style.color="#fff";}
+    ri++;
+    if(ri>finishRound||ri>6){
+      clearInterval(iv);boksRunning=false;
+      var btn2=document.getElementById("boks-btn");if(btn2)btn2.disabled=false;
+      var res2=document.getElementById("boks-res");
+      if(winner===boksSel){
+        var g=Math.floor(boksBet*boksOdds[boksSel]);
+        var netKar=g-boksBet;BAL+=g;kasaOdedi(netKar);
+        if(res2){res2.textContent=BOKSORLER[winner].n+" KAZANDI! +$"+fmt(netKar);res2.className="res-txt win";}
+        toast("+$"+fmt(netKar),"win");
+      } else {
+        kasaKazandi(boksBet);
+        if(res2){res2.textContent=BOKSORLER[winner].n+" KAZANDI! KAYBETTIN.";res2.className="res-txt lose";}
+        toast("-$"+fmt(boksBet),"lose");
+      }
+      setTimeout(function(){
+        randomBoksOdds();
+        for(var i=0;i<2;i++){var e=document.getElementById("bods-"+i);if(e)e.textContent=boksOdds[i]+"x";}
+      },1200);
+    }
+  },400);
+}
+
+function toast(msg,type){
+  var t=document.getElementById("toast");
+  t.textContent=msg;t.className=(type||"info")+" show";
+  clearTimeout(t._r);t._r=setTimeout(function(){t.className="";},2200);
+}
+</script>
+</body>
+</html>
