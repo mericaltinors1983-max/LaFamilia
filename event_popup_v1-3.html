@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>EVENTS</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@400;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#555;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100dvh;font-family:'Oswald',sans-serif;font-weight:700;gap:10px;}
+.demo-row{display:flex;gap:6px;justify-content:center;padding:8px;flex-wrap:wrap;}
+.open-btn{padding:8px 18px;background:rgba(0,0,0,.5);color:#fff;border:1px solid rgba(255,255,255,.3);font-family:'Oswald',sans-serif;font-weight:700;font-size:14px;letter-spacing:1px;cursor:pointer;}
+.dt{padding:5px 10px;background:rgba(0,0,0,.35);color:#ccc;border:1px solid rgba(255,255,255,.2);font-family:'Oswald',sans-serif;font-weight:600;font-size:10px;letter-spacing:1px;cursor:pointer;}
+.dt.on{background:#111;color:#C9A84C;border-color:#C9A84C;}
+#ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:10000;}
+#pop{display:none;position:fixed;bottom:116px;left:50%;transform:translateX(-50%);width:320px;height:520px;background:#fff;border:3px double #111;border-bottom:none;flex-direction:column;overflow:hidden;z-index:10001;}
+#pop.open{display:flex;animation:su .25s cubic-bezier(.4,0,.2,1);}
+@keyframes su{from{transform:translateX(-50%) translateY(640px);}to{transform:translateX(-50%) translateY(0);}}
+
+/* HEADER */
+#hd{height:64px;flex-shrink:0;background:#fff;border-bottom:3px double #111;display:flex;align-items:center;padding:0 10px;position:relative;}
+#hd .center{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;}
+#hd .center img{height:54px;max-width:180px;object-fit:contain;}
+#hd .r{margin-left:auto;display:flex;align-items:center;gap:2px;position:relative;z-index:1;}
+#hd .ib{background:none;border:none;cursor:pointer;padding:2px;display:flex;align-items:center;}
+#hd .ib img{width:22px;height:22px;object-fit:contain;}
+
+/* TABS — 4 adet, kucuk font */
+#tab-bar{display:flex;border-bottom:2px solid #e0e0e0;flex-shrink:0;}
+.tab{flex:1;padding:9px 2px;text-align:center;font-family:'Oswald',sans-serif;font-weight:700;font-size:10px;letter-spacing:.8px;color:#999;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;}
+.tab.active{color:#111;border-bottom:2px solid #111;}
+
+/* SCREENS */
+#screens{flex:1;position:relative;overflow:hidden;min-height:0;}
+.sc{display:none;position:absolute;inset:0;background:#fff;flex-direction:column;overflow-y:auto;}
+.sc.on{display:flex;}
+.sc::-webkit-scrollbar{width:2px;}
+.sc::-webkit-scrollbar-thumb{background:#ddd;}
+
+/* SECTION LABEL */
+.sec-lbl{font-family:'Oswald',sans-serif;font-weight:700;font-size:11px;color:#B8860B;letter-spacing:1.5px;padding:8px 12px 5px;display:block;border-bottom:1px solid #eee;background:#fffdf5;}
+
+/* STREAK */
+.streak-bar{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #eee;background:#fafafa;}
+.s-lbl{font-family:'Oswald',sans-serif;font-weight:700;font-size:10px;color:#888;letter-spacing:1px;display:block;margin-bottom:2px;}
+.s-big{font-family:'Oswald',sans-serif;font-weight:700;font-size:28px;color:#111;line-height:1;}
+.s-sub{font-family:'Oswald',sans-serif;font-weight:600;font-size:10px;color:#aaa;display:block;margin-top:2px;}
+.s-timer{font-family:'Oswald',sans-serif;font-weight:700;font-size:22px;color:#B8860B;display:block;text-align:right;}
+.s-tlbl{font-family:'Oswald',sans-serif;font-weight:700;font-size:10px;color:#888;letter-spacing:1px;display:block;text-align:right;margin-bottom:2px;}
+
+/* DAY GRID */
+.day-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;padding:10px 12px;}
+.day-box{border:1.5px solid #ddd;display:flex;flex-direction:column;align-items:center;padding:6px 2px;gap:3px;position:relative;}
+.day-box.claimed{background:#f5f5f5;border-color:#ddd;}
+.day-box.today{border-color:#111;background:#fff;}
+.day-box.future{opacity:.4;}
+.day-box.special{border-color:#C9A84C;background:#fffbf0;}
+.d-num{font-family:'Oswald',sans-serif;font-weight:700;font-size:9px;color:#888;}
+.d-val{font-family:'Oswald',sans-serif;font-weight:700;font-size:8px;color:#333;text-align:center;line-height:1.2;}
+.d-val.gold{color:#B8860B;}
+.d-check{position:absolute;top:2px;right:3px;font-size:10px;color:#2a7a3a;font-weight:700;}
+.d-dot{position:absolute;bottom:-2px;left:50%;transform:translateX(-50%);width:6px;height:6px;background:#111;border-radius:50%;}
+
+/* CLAIM BTN */
+.claim-wrap{padding:8px 12px 6px;}
+.claim-btn{width:100%;padding:13px;border:none;background:#111;color:#fff;font-family:'Oswald',sans-serif;font-weight:700;font-size:15px;letter-spacing:2px;cursor:pointer;}
+.claim-btn.done{background:#e8e8e8;color:#888;cursor:default;}
+
+/* NOTE */
+.note{margin:5px 12px 8px;padding:7px 10px;border:1px solid #eee;background:#fafafa;}
+.note-txt{font-family:'Oswald',sans-serif;font-weight:600;font-size:10px;color:#777;line-height:1.6;}
+
+/* PUAN BAR */
+.puan-wrap{padding:12px 14px;border-bottom:1px solid #eee;}
+.puan-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;}
+.puan-lbl{font-family:'Oswald',sans-serif;font-weight:700;font-size:12px;color:#111;letter-spacing:.5px;}
+.puan-val{font-family:'Oswald',sans-serif;font-weight:700;font-size:26px;color:#111;}
+.puan-bar-bg{height:10px;background:#eee;border:1px solid #ddd;position:relative;border-radius:2px;}
+.puan-bar-fill{height:100%;background:#111;transition:width .3s;border-radius:2px;}
+.puan-bar-marks{display:flex;justify-content:space-between;margin-top:4px;}
+.puan-mark{font-family:'Oswald',sans-serif;font-weight:700;font-size:9px;color:#bbb;}
+.puan-mark.reached{color:#111;}
+
+/* SANDIKLAR */
+.chest-section{padding:10px 12px 12px;border-bottom:1px solid #eee;}
+.chest-row{display:flex;justify-content:space-between;gap:5px;}
+.chest{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;flex:1;}
+.chest-ico{width:46px;height:46px;border:2px solid #ddd;display:flex;align-items:center;justify-content:center;font-size:22px;background:#fafafa;position:relative;border-radius:2px;}
+.chest-ico.ready{border-color:#111;background:#fff;box-shadow:0 0 0 1px #111;}
+.chest-ico.opened{border-color:#ddd;background:#f5f5f5;opacity:.5;}
+.chest-ico.locked{opacity:.3;}
+.chest-ico .ready-dot{position:absolute;top:-4px;right:-4px;width:10px;height:10px;background:#2a7a3a;border-radius:50%;border:2px solid #fff;}
+.chest-lbl{font-family:'Oswald',sans-serif;font-weight:700;font-size:9px;color:#333;text-align:center;}
+.chest-lbl.muted{color:#bbb;}
+.chest-puan{font-family:'Oswald',sans-serif;font-weight:600;font-size:8px;color:#bbb;text-align:center;}
+.chest-puan.reached{color:#2a7a3a;}
+
+/* VIP SANDIK */
+.vip-chest-wrap{margin:10px 12px;padding:10px 12px;border:2px solid #C9A84C;display:flex;align-items:center;gap:12px;background:#fffbf0;}
+.vip-chest-ico{font-size:30px;flex-shrink:0;}
+.vip-chest-body{flex:1;}
+.vip-chest-title{font-family:'Oswald',sans-serif;font-weight:700;font-size:17px;color:#111;letter-spacing:1px;display:block;}
+.vip-chest-sub{font-family:'Oswald',sans-serif;font-weight:600;font-size:10px;color:#888;display:block;margin-top:2px;}
+.vip-btn{padding:8px 12px;border:none;background:#111;color:#fff;font-family:'Oswald',sans-serif;font-weight:700;font-size:13px;letter-spacing:1px;cursor:pointer;flex-shrink:0;}
+.vip-btn.done{background:#e8e8e8;color:#888;cursor:default;}
+.vip-btn.locked{background:#fff;color:#B8860B;border:1.5px solid #C9A84C;cursor:default;}
+
+/* GOREV */
+.gorev-row{display:flex;align-items:center;padding:10px 14px;border-bottom:1px solid #f0f0f0;gap:12px;}
+.gorev-row.done-row{background:#f9fff9;}
+.g-ico{width:34px;height:34px;border:1.5px solid #e0e0e0;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;background:#fafafa;}
+.g-ico.done{background:#f0faf0;border-color:#b2dfdb;}
+.g-body{flex:1;min-width:0;}
+.g-title{font-family:'Oswald',sans-serif;font-weight:700;font-size:12px;color:#111;display:block;letter-spacing:.3px;}
+.g-prog-txt{font-family:'Oswald',sans-serif;font-weight:600;font-size:10px;color:#888;display:block;margin-top:2px;}
+.g-prog-bar{height:5px;background:#eee;margin-top:5px;border-radius:2px;}
+.g-prog-fill{height:100%;background:#111;border-radius:2px;}
+.g-rew{text-align:right;flex-shrink:0;}
+.g-puan{font-family:'Oswald',sans-serif;font-weight:700;font-size:18px;color:#111;display:block;line-height:1;}
+.g-puan-lbl{font-family:'Oswald',sans-serif;font-weight:700;font-size:9px;color:#aaa;display:block;letter-spacing:.5px;}
+.g-done-ico{font-family:'Oswald',sans-serif;font-weight:700;font-size:16px;color:#2a7a3a;}
+
+/* HAFTALIK */
+.week-hero{margin:10px 12px;padding:12px;border:1.5px solid #ddd;display:flex;flex-direction:column;align-items:center;gap:5px;background:#fafafa;}
+.wh-lbl{font-family:'Oswald',sans-serif;font-weight:700;font-size:11px;color:#888;letter-spacing:1px;}
+.wh-val{font-family:'Oswald',sans-serif;font-weight:700;font-size:30px;color:#111;}
+.wh-sub{font-family:'Oswald',sans-serif;font-weight:600;font-size:10px;color:#aaa;}
+.week-prog{margin:0 12px 10px;height:8px;background:#eee;border:1px solid #ddd;border-radius:2px;}
+.week-bar{height:100%;background:#111;border-radius:2px;}
+.wm-row{display:flex;align-items:center;padding:10px 14px;border-bottom:1px solid #f0f0f0;gap:12px;}
+.wm-day{width:34px;height:34px;border:1.5px solid #ddd;display:flex;align-items:center;justify-content:center;font-family:'Oswald',sans-serif;font-weight:700;font-size:12px;color:#888;flex-shrink:0;}
+.wm-day.done{background:#111;border-color:#111;color:#fff;}
+.wm-body{flex:1;}
+.wm-title{font-family:'Oswald',sans-serif;font-weight:700;font-size:12px;color:#111;display:block;}
+.wm-sub{font-family:'Oswald',sans-serif;font-weight:600;font-size:10px;color:#888;display:block;margin-top:2px;}
+.wm-rew{font-family:'Oswald',sans-serif;font-weight:700;font-size:17px;color:#B8860B;}
+.wm-rew.grey{color:#ccc;}
+.week-reset{margin:8px 12px;padding:7px 10px;background:#f9f9f9;border:1px solid #eee;text-align:center;}
+.wr-txt{font-family:'Oswald',sans-serif;font-weight:600;font-size:10px;color:#888;}
+
+/* AYLIK */
+.ev-hero{margin:10px 12px;border:2px solid #111;overflow:hidden;}
+.ev-top{background:#111;padding:12px 14px;}
+.ev-title{font-family:'Oswald',sans-serif;font-weight:700;font-size:20px;color:#C9A84C;letter-spacing:2px;display:block;}
+.ev-sub{font-family:'Oswald',sans-serif;font-weight:600;font-size:10px;color:#aaa;letter-spacing:1px;margin-top:2px;display:block;}
+.ev-timer{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-bottom:1px solid #eee;}
+.et-lbl{font-family:'Oswald',sans-serif;font-weight:700;font-size:10px;color:#888;}
+.et-val{font-family:'Oswald',sans-serif;font-weight:700;font-size:18px;color:#111;}
+.my-row{margin:8px 12px;padding:10px 12px;background:#fffbf0;border:1px solid #f0e0a0;display:flex;justify-content:space-between;align-items:center;}
+.mr-lbl{font-family:'Oswald',sans-serif;font-weight:700;font-size:11px;color:#B8860B;}
+.mr-val{font-family:'Oswald',sans-serif;font-weight:700;font-size:22px;color:#B8860B;}
+.er-row{display:flex;align-items:center;padding:9px 14px;border-bottom:1px solid #f0f0f0;gap:10px;}
+.er-row.mine{background:#fffbf0;}
+.er-rank{width:30px;height:30px;background:#e0e0e0;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.er-rank.gold{background:linear-gradient(135deg,#B8860B,#C9A84C);}
+.er-rank.silver{background:#888;}
+.er-rank.bronze{background:#a0522d;}
+.er-num{font-family:'Oswald',sans-serif;font-weight:700;font-size:12px;color:#fff;}
+.er-body{flex:1;}
+.er-name{font-family:'Oswald',sans-serif;font-weight:700;font-size:12px;color:#111;display:block;}
+.er-psub{font-family:'Oswald',sans-serif;font-weight:600;font-size:10px;color:#888;display:block;margin-top:1px;}
+.er-rew{font-family:'Oswald',sans-serif;font-weight:700;font-size:14px;color:#B8860B;}
+.er-rew.grey{color:#aaa;}
+
+/* BOTTOM */
+#bot{flex-shrink:0;border-top:3px double #111;}
+#bot button{width:100%;padding:8px;background:#fff;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+#bot button img{width:50px;height:50px;object-fit:contain;}
+#toast{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);background:#111;color:#fff;font-family:'Oswald',sans-serif;font-weight:600;font-size:11px;letter-spacing:.5px;padding:8px 16px;white-space:nowrap;opacity:0;transition:opacity .2s;pointer-events:none;z-index:200;}
+#toast.show{opacity:1;}
+#toast.green{background:#2a7a3a;}
+.bot-sim{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:320px;height:116px;background:#111;display:flex;align-items:center;justify-content:center;z-index:9999;}
+.bot-sim-txt{font-family:'Oswald',sans-serif;font-weight:600;font-size:9px;color:#444;letter-spacing:2px;}
+</style>
+</head>
+<body>
+<div class="demo-row">
+  <button class="open-btn" onclick="acPopup()">EVENTS</button>
+</div>
+<div class="demo-row">
+  <button class="dt on" id="dt-d3"  onclick="setDemo(3,false,false,this)">GUN 3</button>
+  <button class="dt"    id="dt-d7"  onclick="setDemo(7,false,false,this)">GUN 7</button>
+  <button class="dt"    id="dt-alindi" onclick="setDemo(7,true,false,this)">ALINDI</button>
+  <button class="dt"    id="dt-vip" onclick="setDemo(7,false,true,this)">VIP</button>
+</div>
+<div id="ov" onclick="closePop()"></div>
+<div class="bot-sim"><span class="bot-sim-txt">BOTTOM BAR</span></div>
+
+<div id="pop">
+  <div id="hd">
+    <span style="font-size:22px;position:relative;z-index:1;">&#9889;</span>
+    <div class="center">
+      <img src="https://mericaltinors1983-max.github.io/hustler/lafamilia-2.png" onerror="this.style.display='none'">
+    </div>
+    <div class="r">
+      <button class="ib"><img src="https://mericaltinors1983-max.github.io/hustler/info2.png" onerror="this.outerHTML='<span style=color:#888;font-size:15px>i</span>'"></button>
+      <button class="ib" onclick="closePop()"><img src="https://mericaltinors1983-max.github.io/hustler/close1.png" onerror="this.outerHTML='<span style=color:#555;font-size:17px>X</span>'"></button>
+    </div>
+  </div>
+
+  <div id="tab-bar">
+    <div class="tab active" onclick="switchTab('gunluk',this)">GUNLUK</div>
+    <div class="tab" onclick="switchTab('gorevler',this)">GOREVLER</div>
+    <div class="tab" onclick="switchTab('haftalik',this)">HAFTALIK</div>
+    <div class="tab" onclick="switchTab('aylik',this)">AYLIK</div>
+  </div>
+
+  <div id="screens">
+    <div class="sc on" id="sc-gunluk"></div>
+    <div class="sc" id="sc-gorevler"></div>
+    <div class="sc" id="sc-haftalik"></div>
+    <div class="sc" id="sc-aylik"></div>
+  </div>
+
+  <div id="bot">
+    <button onclick="closePop()">
+      <img src="https://mericaltinors1983-max.github.io/hustler/close_icon.png" onerror="this.outerHTML='<span style=font-size:20px>X</span>'">
+    </button>
+  </div>
+  <div id="toast"></div>
+</div>
+
+<script>
+var STREAK = 3;
+var TODAY_CLAIMED = false;
+var IS_VIP = false;
+var TOPLAM_PUAN = 35;
+var VIP_SANDIK_ACILDI = false;
+
+var ODULLER = [
+  {gun:1,  val:'$10K',      special:false},
+  {gun:2,  val:'$25K',      special:false},
+  {gun:3,  val:'$50K',      special:false},
+  {gun:4,  val:'$75K',      special:false},
+  {gun:5,  val:'$100K',     special:false},
+  {gun:6,  val:'$150K',     special:false},
+  {gun:7,  val:'$250K+ITEM',special:true },
+  {gun:8,  val:'$300K',     special:false},
+  {gun:9,  val:'$350K',     special:false},
+  {gun:10, val:'$400K',     special:false},
+  {gun:11, val:'$450K',     special:false},
+  {gun:12, val:'$500K',     special:false},
+  {gun:13, val:'$600K',     special:false},
+  {gun:14, val:'$750K',     special:false},
+  {gun:15, val:'$1M+NADIR', special:true }
+];
+
+var SANDIKLAR = [
+  {puan:20,  odul:'$25K',         acildi:false},
+  {puan:40,  odul:'$50K',         acildi:false},
+  {puan:60,  odul:'$75K',         acildi:false},
+  {puan:80,  odul:'$100K',        acildi:false},
+  {puan:100, odul:'$200K+VIP',    acildi:false}
+];
+
+var GOREVLER = [
+  {id:0, ikon:'&#128302;', baslik:'2 SUC YAP',          hedef:2,  ilerleme:2,  puan:10, odul:'$5K'},
+  {id:1, ikon:'&#128230;', baslik:'1 KARGO GONDER',      hedef:1,  ilerleme:1,  puan:15, odul:'$10K'},
+  {id:2, ikon:'&#128184;', baslik:'$50K KAZAN',          hedef:50, ilerleme:35, puan:20, odul:'$15K'},
+  {id:3, ikon:'&#9876;',   baslik:'3 DUSMANLA SAVAS',    hedef:3,  ilerleme:1,  puan:25, odul:'$20K'},
+  {id:4, ikon:'&#127968;', baslik:'1 SEHRE SEYAHAT ET',  hedef:1,  ilerleme:0,  puan:30, odul:'$25K'}
+];
+
+var ESIKLER = [
+  {gun:3, val:'$50K',         label:'3 GUN'},
+  {gun:5, val:'$150K',        label:'5 GUN'},
+  {gun:7, val:'$500K+T2 BG',  label:'7 GUN', special:true}
+];
+
+var SIRALAMA = [
+  {sira:1, isim:'CORLEONE_DON',  puan:'48,200', odul:'$2M+NADIR'},
+  {sira:2, isim:'SHADOW_X',      puan:'41,500', odul:'$1M+T5 BG'},
+  {sira:3, isim:'DARK_BLADE',    puan:'38,900', odul:'$500K+T4 BG'},
+  {sira:4, isim:'THE_GODFATHER', puan:'31,200', odul:'$250K'},
+  {sira:5, isim:'IRON_FIST',     puan:'28,800', odul:'$250K'},
+  {sira:99,isim:'SEN',           puan:'12,400', odul:'KATILIM ODULU', benim:true}
+];
+
+function renderGunluk() {
+  var sc = document.getElementById('sc-gunluk');
+  if (!sc) return;
+  var todayIdx = STREAK - 1;
+  var html = '';
+
+  html += '<div class="streak-bar">';
+  html += '<div>';
+  html += '<span class="s-lbl">GUNLUK SERI</span>';
+  html += '<span class="s-big">' + STREAK + ' GUN</span>';
+  html += '<span class="s-sub">Gun atlanirsa sifirlanir</span>';
+  html += '</div>';
+  html += '<div style="text-align:right;">';
+  html += '<span class="s-tlbl">SONRAKI ODUL</span>';
+  html += '<span class="s-timer">' + (TODAY_CLAIMED ? '11:42' : 'HAZIR') + '</span>';
+  html += '</div></div>';
+
+  html += '<span class="sec-lbl">GIRIS ODULLERI - 15 GUN</span>';
+  html += '<div class="day-grid">';
+  for (var i = 0; i < ODULLER.length; i++) {
+    var d = ODULLER[i];
+    var idx = d.gun - 1;
+    var isClaimed = (idx < todayIdx) || (idx === todayIdx && TODAY_CLAIMED);
+    var isToday = idx === todayIdx && !TODAY_CLAIMED;
+    var isFuture = idx > todayIdx;
+    var cls = 'day-box';
+    if (isClaimed) cls += ' claimed';
+    if (isToday) cls += ' today';
+    if (isFuture) cls += ' future';
+    if (d.special) cls += ' special';
+    html += '<div class="' + cls + '">';
+    html += '<span class="d-num">G' + d.gun + '</span>';
+    html += '<span class="d-val' + (d.special ? ' gold' : '') + '">' + d.val + '</span>';
+    if (isClaimed) html += '<span class="d-check">&#10003;</span>';
+    if (isToday) html += '<span class="d-dot"></span>';
+    html += '</div>';
+  }
+  html += '</div>';
+
+  html += '<div class="claim-wrap">';
+  if (TODAY_CLAIMED) {
+    html += '<button class="claim-btn done">BUGUN ALINDI &#10003;</button>';
+  } else {
+    var o = ODULLER[todayIdx];
+    html += '<button class="claim-btn" onclick="claimGunluk()">GUN ' + STREAK + ' AL  -  ' + o.val + '</button>';
+  }
+  html += '</div>';
+  html += '<div class="note"><span class="note-txt">VIP oyuncular tum odulleri 2x alir. Gun 7 ve 15te ozel item verilir.</span></div>';
+
+  sc.innerHTML = html;
+}
+
+function renderGorevler() {
+  var sc = document.getElementById('sc-gorevler');
+  if (!sc) return;
+  var html = '';
+
+  // puan bar
+  var pct = Math.min(100, TOPLAM_PUAN);
+  html += '<div class="puan-wrap">';
+  html += '<div class="puan-header">';
+  html += '<span class="puan-lbl">GUNLUK PUAN</span>';
+  html += '<span class="puan-val">' + TOPLAM_PUAN + ' / 100</span>';
+  html += '</div>';
+  html += '<div class="puan-bar-bg"><div class="puan-bar-fill" style="width:' + pct + '%"></div></div>';
+  html += '<div class="puan-bar-marks">';
+  var marks = [0, 20, 40, 60, 80, 100];
+  for (var m = 0; m < marks.length; m++) {
+    var reached = TOPLAM_PUAN >= marks[m];
+    html += '<span class="puan-mark' + (reached ? ' reached' : '') + '">' + marks[m] + '</span>';
+  }
+  html += '</div></div>';
+
+  // sandiklar
+  html += '<span class="sec-lbl">ODUL SANDIKLARI</span>';
+  html += '<div class="chest-section">';
+  html += '<div class="chest-row">';
+  for (var s = 0; s < SANDIKLAR.length; s++) {
+    var chest = SANDIKLAR[s];
+    var isReady = TOPLAM_PUAN >= chest.puan && !chest.acildi;
+    var isOpened = chest.acildi;
+    var icoCls = isReady ? 'ready' : isOpened ? 'opened' : 'locked';
+    var ico = isOpened ? '&#128084;' : '&#127873;';
+    var puanCls = TOPLAM_PUAN >= chest.puan ? 'reached' : '';
+    var lblCls = isOpened || (!isReady && !isOpened) ? 'muted' : '';
+    html += '<div class="chest" onclick="sandikAc(' + s + ')">';
+    html += '<div class="chest-ico ' + icoCls + '">' + ico;
+    if (isReady) html += '<div class="ready-dot"></div>';
+    html += '</div>';
+    html += '<span class="chest-lbl ' + lblCls + '">' + chest.odul + '</span>';
+    html += '<span class="chest-puan ' + puanCls + '">' + chest.puan + ' PTS</span>';
+    html += '</div>';
+  }
+  html += '</div></div>';
+
+  // VIP sandik
+  html += '<span class="sec-lbl">VIP GUNLUK SANDIK</span>';
+  html += '<div class="vip-chest-wrap">';
+  html += '<span class="vip-chest-ico">&#11088;</span>';
+  html += '<div class="vip-chest-body">';
+  html += '<span class="vip-chest-title">VIP OZEL SANDIK</span>';
+  html += '<span class="vip-chest-sub">Her gun 1 kez  -  Rastgele VIP odul</span>';
+  html += '</div>';
+  if (!IS_VIP) {
+    html += '<button class="vip-btn locked">VIP AL</button>';
+  } else if (VIP_SANDIK_ACILDI) {
+    html += '<button class="vip-btn done">ALINDI</button>';
+  } else {
+    html += '<button class="vip-btn" onclick="vipSandikAc()">AC</button>';
+  }
+  html += '</div>';
+
+  // gorevler
+  html += '<span class="sec-lbl">GUNLUK GOREVLER  -  HER GUN SIFIRLANIR</span>';
+  for (var g = 0; g < GOREVLER.length; g++) {
+    var gor = GOREVLER[g];
+    var done = gor.ilerleme >= gor.hedef;
+    var gpct = Math.min(100, Math.round(gor.ilerleme / gor.hedef * 100));
+    html += '<div class="gorev-row' + (done ? ' done-row' : '') + '">';
+    html += '<div class="g-ico' + (done ? ' done' : '') + '">' + gor.ikon + '</div>';
+    html += '<div class="g-body">';
+    html += '<span class="g-title">' + gor.baslik + '</span>';
+    html += '<span class="g-prog-txt">' + gor.ilerleme + ' / ' + gor.hedef + (done ? '  TAMAMLANDI' : '') + '</span>';
+    if (!done) {
+      html += '<div class="g-prog-bar"><div class="g-prog-fill" style="width:' + gpct + '%"></div></div>';
+    }
+    html += '</div>';
+    html += '<div class="g-rew">';
+    if (done) {
+      html += '<span class="g-done-ico">&#10003;</span>';
+    } else {
+      html += '<span class="g-puan">+' + gor.puan + '</span>';
+      html += '<span class="g-puan-lbl">PUAN</span>';
+    }
+    html += '</div></div>';
+  }
+
+  sc.innerHTML = html;
+}
+
+function renderHaftalik() {
+  var sc = document.getElementById('sc-haftalik');
+  if (!sc) return;
+  var weekDay = Math.min(STREAK, 7);
+  var pct = Math.round(weekDay / 7 * 100);
+  var html = '';
+  html += '<div class="week-hero">';
+  html += '<span class="wh-lbl">BU HAFTA GIRIS</span>';
+  html += '<span class="wh-val">' + weekDay + ' / 7 GUN</span>';
+  html += '<span class="wh-sub">Her Pazartesi sifirlanir</span>';
+  html += '</div>';
+  html += '<div class="week-prog"><div class="week-bar" style="width:' + pct + '%"></div></div>';
+  html += '<span class="sec-lbl">MILESTONLAR</span>';
+  for (var i = 0; i < ESIKLER.length; i++) {
+    var e = ESIKLER[i];
+    var done = weekDay >= e.gun;
+    html += '<div class="wm-row">';
+    html += '<div class="wm-day' + (done ? ' done' : '') + '">' + (done ? '&#10003;' : e.gun) + '</div>';
+    html += '<div class="wm-body">';
+    html += '<span class="wm-title">' + e.label + ' TAMAMLA</span>';
+    html += '<span class="wm-sub">' + (done ? 'Tamamlandi!' : 'Devam ediyor...') + '</span>';
+    html += '</div>';
+    html += '<span class="wm-rew' + (done ? '' : ' grey') + '">' + e.val + '</span>';
+    html += '</div>';
+  }
+  html += '<div class="week-reset"><span class="wr-txt">Sonraki sifirlama: PAZARTESI 00:00</span></div>';
+  sc.innerHTML = html;
+}
+
+function renderAylik() {
+  var sc = document.getElementById('sc-aylik');
+  if (!sc) return;
+  var html = '';
+  html += '<div class="ev-hero">';
+  html += '<div class="ev-top">';
+  html += '<span class="ev-title">THE HEIST MONTH</span>';
+  html += '<span class="ev-sub">EN FAZLA HEIST YAPAN KAZANIR</span>';
+  html += '</div>';
+  html += '<div class="ev-timer">';
+  html += '<span class="et-lbl">BITISE KALAN</span>';
+  html += '<span class="et-val">14G 08SA 22DK</span>';
+  html += '</div></div>';
+  html += '<div class="my-row">';
+  html += '<span class="mr-lbl">SENIN PUANIN</span>';
+  html += '<span class="mr-val">12,400</span>';
+  html += '</div>';
+  html += '<span class="sec-lbl">SIRALAMA</span>';
+  for (var i = 0; i < SIRALAMA.length; i++) {
+    var sr = SIRALAMA[i];
+    var rankCls = sr.sira === 1 ? 'gold' : sr.sira === 2 ? 'silver' : sr.sira === 3 ? 'bronze' : '';
+    html += '<div class="er-row' + (sr.benim ? ' mine' : '') + '">';
+    html += '<div class="er-rank ' + rankCls + '"><span class="er-num">' + (sr.sira <= 5 ? sr.sira : '-') + '</span></div>';
+    html += '<div class="er-body">';
+    html += '<span class="er-name">' + (sr.benim ? 'SEN (' + sr.isim + ')' : sr.isim) + '</span>';
+    html += '<span class="er-psub">' + sr.puan + ' PUAN</span>';
+    html += '</div>';
+    html += '<span class="er-rew' + (sr.sira > 5 ? ' grey' : '') + '">' + sr.odul + '</span>';
+    html += '</div>';
+  }
+  html += '<div class="note" style="margin:8px 12px;"><span class="note-txt">Tum katilimcilara $50K katilim odulu. Ilk 3e ozel item verilir.</span></div>';
+  sc.innerHTML = html;
+}
+
+function claimGunluk() {
+  TODAY_CLAIMED = true;
+  var o = ODULLER[STREAK - 1];
+  toast('Gun ' + STREAK + '  -  ' + o.val + ' alindi!', 'green');
+  renderGunluk();
+}
+
+function sandikAc(idx) {
+  var chest = SANDIKLAR[idx];
+  if (chest.acildi) { toast('Bu sandik zaten acildi'); return; }
+  if (TOPLAM_PUAN < chest.puan) { toast(chest.puan + ' puan gerekli  -  Simdi: ' + TOPLAM_PUAN); return; }
+  chest.acildi = true;
+  toast('Sandik acildi!  +' + chest.odul, 'green');
+  renderGorevler();
+}
+
+function vipSandikAc() {
+  VIP_SANDIK_ACILDI = true;
+  var oduller = ['$50K', '$75K', '$100K', '3 Gun VIP', '$150K', 'T2 BG'];
+  var odul = oduller[Math.floor(Math.random() * oduller.length)];
+  toast('VIP Sandik!  +' + odul, 'green');
+  renderGorevler();
+}
+
+function switchTab(id, el) {
+  document.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('active'); });
+  el.classList.add('active');
+  document.querySelectorAll('.sc').forEach(function(s){ s.classList.remove('on'); });
+  document.getElementById('sc-' + id).classList.add('on');
+}
+
+function acPopup() {
+  renderGunluk(); renderGorevler(); renderHaftalik(); renderAylik();
+  document.getElementById('ov').style.display = 'block';
+  document.getElementById('pop').classList.add('open');
+}
+
+function closePop() {
+  document.getElementById('ov').style.display = 'none';
+  document.getElementById('pop').classList.remove('open');
+}
+
+function setDemo(gun, claimed, vip, el) {
+  STREAK = gun;
+  TODAY_CLAIMED = claimed;
+  IS_VIP = vip;
+  VIP_SANDIK_ACILDI = false;
+  SANDIKLAR.forEach(function(s){ s.acildi = false; });
+  document.querySelectorAll('.dt').forEach(function(b){ b.classList.remove('on'); });
+  el.classList.add('on');
+  renderGunluk(); renderGorevler(); renderHaftalik(); renderAylik();
+}
+
+function toast(msg, type) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = (type || '') + ' show';
+  clearTimeout(t._r);
+  t._r = setTimeout(function(){ t.className = ''; }, 2600);
+}
+</script>
+</body>
+</html>
